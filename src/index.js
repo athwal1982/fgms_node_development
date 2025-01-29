@@ -18,6 +18,8 @@ import {dashboardRouter} from "./api/dashboard/dashboardRouter.js";
 import {userProfileRightsRouter} from "./api/user-profile-rights/userProfileRightsRouter.js";
 import {supportTicketRouter} from "./api/support-ticket/supportTicketRouter.js";
 import {supportTicketCateRouter} from "./api/support-ticket-category/supportTicketCateRouter.js";
+import {agentTrainingRouter} from "./api/agent-training/agentTrainingRouter.js";
+
 import {loggingApi} from "./logger.js";
 import nodecache from 'node-cache';
 const appCache = new nodecache( { stdTTL: 100, checkperiod: 120 } );
@@ -68,6 +70,8 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 	router.use('/', userProfileRightsRouter)
 	router.use('/', supportTicketRouter)
 	router.use('/', supportTicketCateRouter)
+	router.use('/', agentTrainingRouter)
+
 
 	app.use((err, req, res, next) => {
 		const error = err;
