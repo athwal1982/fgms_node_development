@@ -247,27 +247,26 @@ export class AgentTrainingService {
         let totalPages = 0;
         let newItem = {};
         try {
-            const { page_size, page_number } = body;
+            const { page_size, page_number, searchQuery } = body;
     
             if (!page_size || !page_number || page_size <= 0 || page_number <= 0) {
                 throw new Error("Invalid pagination parameters");
             }
     
-            // Call the stored procedure and capture output variables
             const res = await sequelize.query(`
                 CALL krph_agent_list_new(
                     :page_size,
                     :page_number,
+                    :searchQuery,
                     @rcode,
                     @rmessage,
                     @totalPages
                 );
             `, {
-                replacements: { page_size, page_number },
+                replacements: { page_size, page_number, searchQuery },
                 type: sequelize.QueryTypes.RAW
             });
     
-            // Retrieve the output parameters after calling the stored procedure
             const result = await sequelize.query(`
                 SELECT @rcode AS code, @rmessage AS message, @totalPages AS totalPages
             `, {
@@ -275,9 +274,7 @@ export class AgentTrainingService {
             });
     
             let data = result[0];
-            data = data[0]; // Extracting the data from the result
-    
-            console.log(data, "Procedure Result");
+            data = data[0];
     
             rcode = +data.code;
             rmessage = data.message;
@@ -288,7 +285,7 @@ export class AgentTrainingService {
             }
     
             newItem = {
-                traineeList: res,  // Assuming `res` contains the paginated data
+                traineeList: res,
                 totalPages: totalPages
             };
             items = newItem;
