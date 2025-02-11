@@ -16,6 +16,8 @@ const validator = createValidator({
 
 agentTrainingRouter.post('/getAgentRegion', agentTrainingController.getAgentRegion);
 agentTrainingRouter.post('/updateAgent', agentTrainingController.updateAgent);
+agentTrainingRouter.post('/agentList', agentTrainingController.agentList);
+
 
 
    

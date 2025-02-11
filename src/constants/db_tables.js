@@ -141,5 +141,6 @@ FGMS_USER_ASSIGNED_TICKET_LIST:`${NAME}.assignedTicketView_csc_index`,
     FGMS_PREMIUM_CALCULATORY_HISTORY_INSERT: `${NAME}.fgms_premium_calculatory_history_insert`,
     FGMS_PREMIUM_CALCULATORY_HISTORY_REPORT: `${NAME}.fgms_premium_calculatory_history_report`,
     FGMS_GET_REGION:`${NAME}.krph_agent_training_region`,
-    FGMS_UPDATE_AGENT:`${NAME}.update_agent_info`
+    FGMS_UPDATE_AGENT:`${NAME}.update_agent_info`,
+    FGMS_LIST_AGENT:`${NAME}.krph_agent_list`
 };
