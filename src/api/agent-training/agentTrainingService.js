@@ -292,7 +292,7 @@ export class AgentTrainingService {
             }
     
             newItem = {
-                agentList: res,
+                traineeList: res,
                 totalPages: totalPages
             };
             items = newItem;
