@@ -246,11 +246,16 @@ export class AgentTrainingService {
         let rmessage = '';
         let totalPages = 0;
         let newItem = {};
+        
         try {
-            const { page_size, page_number, searchQuery } = body;
+            const { page_size, page_number, searchQuery, viewMode, userId } = body;
     
             if (!page_size || !page_number || page_size <= 0 || page_number <= 0) {
                 throw new Error("Invalid pagination parameters");
+            }
+    
+            if (viewMode === 'BYID' && (!userId || userId === '')) {
+                throw new Error("UserID is required for viewMode 'BYID'");
             }
     
             const res = await sequelize.query(`
@@ -258,12 +263,14 @@ export class AgentTrainingService {
                     :page_size,
                     :page_number,
                     :searchQuery,
+                    :viewMode,
+                    :userId,
                     @rcode,
                     @rmessage,
                     @totalPages
                 );
             `, {
-                replacements: { page_size, page_number, searchQuery },
+                replacements: { page_size, page_number, searchQuery, viewMode, userId },
                 type: sequelize.QueryTypes.RAW
             });
     
@@ -285,7 +292,7 @@ export class AgentTrainingService {
             }
     
             newItem = {
-                traineeList: res,
+                agentList: res,
                 totalPages: totalPages
             };
             items = newItem;
