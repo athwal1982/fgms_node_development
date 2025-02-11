@@ -188,10 +188,63 @@ export class AgentTrainingService {
     // }
 
 
+    // async agentList(body) {
+    //     let items = {};
+    //     let rcode = 0;
+    //     let rmessage = '';
+    //     let newItem = {};
+    //     try {
+    //         const { page_size, page_number } = body;
+    
+    //         if (!page_size || !page_number || page_size <= 0 || page_number <= 0) {
+    //             throw new Error("Invalid pagination parameters");
+    //         }
+    
+    //         const res = await sequelize.query(`
+    //             CALL ${STORE_PROCEDURE.FGMS_LIST_AGENT}(
+    //                 :page_size,
+    //                 :page_number,
+    //                 @totalPages
+    //                 @rcode,
+    //                 @rmessage
+    //             )`, {
+    //             replacements: { page_size, page_number },
+    //             type: sequelize.QueryTypes.RAW
+    //         });
+    // console.log(res, "res")
+    //         const result = await sequelize.query(`
+    //             SELECT @rcode AS code, @rmessage AS message
+    //         `, {
+    //             type: sequelize.QueryTypes.RAW
+    //         });
+    //         let data = result[0];
+    //         data = data[0]
+    //         console.log(data, "sss")
+
+    //         rcode = +data.code;
+    //         rmessage = data.message;
+    //         if (rcode !== 1) {
+    //             throw new Error(rmessage);
+    //         }
+    //         newItem = {
+    //             traineeList: res
+    //         };
+    //         items = newItem;
+    
+    //     } catch (err) {
+    //         console.error(err);
+    //         throw new Error('Something Went Wrong!');
+    //     }
+    
+    //     return { data: items, message: rmessage };
+    // }
+    
+    
     async agentList(body) {
         let items = {};
         let rcode = 0;
         let rmessage = '';
+        let totalPages = 0;
         let newItem = {};
         try {
             const { page_size, page_number } = body;
@@ -200,33 +253,43 @@ export class AgentTrainingService {
                 throw new Error("Invalid pagination parameters");
             }
     
+            // Call the stored procedure and capture output variables
             const res = await sequelize.query(`
-                CALL ${STORE_PROCEDURE.FGMS_LIST_AGENT}(
+                CALL krph_agent_list_new(
                     :page_size,
                     :page_number,
                     @rcode,
-                    @rmessage
-                )`, {
+                    @rmessage,
+                    @totalPages
+                );
+            `, {
                 replacements: { page_size, page_number },
                 type: sequelize.QueryTypes.RAW
             });
-    console.log(res, "res")
+    
+            // Retrieve the output parameters after calling the stored procedure
             const result = await sequelize.query(`
-                SELECT @rcode AS code, @rmessage AS message
+                SELECT @rcode AS code, @rmessage AS message, @totalPages AS totalPages
             `, {
                 type: sequelize.QueryTypes.RAW
             });
+    
             let data = result[0];
-            data = data[0]
-            console.log(data, "sss")
-
+            data = data[0]; // Extracting the data from the result
+    
+            console.log(data, "Procedure Result");
+    
             rcode = +data.code;
             rmessage = data.message;
+            totalPages = data.totalPages;
+    
             if (rcode !== 1) {
                 throw new Error(rmessage);
             }
+    
             newItem = {
-                traineeList: res
+                traineeList: res,  // Assuming `res` contains the paginated data
+                totalPages: totalPages
             };
             items = newItem;
     
@@ -237,7 +300,6 @@ export class AgentTrainingService {
     
         return { data: items, message: rmessage };
     }
-    
     
     
     

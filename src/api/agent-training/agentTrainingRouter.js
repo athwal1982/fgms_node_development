@@ -14,8 +14,8 @@ const validator = createValidator({
     passError: true
 })
 
-agentTrainingRouter.post('/getAgentRegion', agentTrainingController.getAgentRegion);
-agentTrainingRouter.post('/updateAgent', agentTrainingController.updateAgent);
+agentTrainingRouter.post('/getAgentRegion',authMiddleware, agentTrainingController.getAgentRegion);
+agentTrainingRouter.post('/updateAgent', authMiddleware,agentTrainingController.updateAgent);
 agentTrainingRouter.post('/agentList', agentTrainingController.agentList);
 
 
