@@ -140,5 +140,6 @@ FGMS_USER_ASSIGNED_TICKET_LIST:`${NAME}.assignedTicketView_csc_index`,
    SUPPORT_TICKET_FARMER_CROP_LOSS_DETAIL: `${NAME}.support_ticket_farmer_crop_loss_detail`,
     FGMS_PREMIUM_CALCULATORY_HISTORY_INSERT: `${NAME}.fgms_premium_calculatory_history_insert`,
     FGMS_PREMIUM_CALCULATORY_HISTORY_REPORT: `${NAME}.fgms_premium_calculatory_history_report`,
-    FGMS_GET_REGION:`${NAME}.krph_agent_training_region`
+    FGMS_GET_REGION:`${NAME}.krph_agent_training_region`,
+    FGMS_UPDATE_AGENT:`${NAME}.update_agent_info`
 };

@@ -27,4 +27,17 @@ export class AgentTrainingController {
             })
         }
     }
+
+    updateAgent = async (req, res)=>{
+        try{
+            let {data, message}= await this.agentTrainingService.updateAgent(req.body);
+            if (data) data = await this.utilService.GZip(data);
+
+            return jsonResponseHandler(data, message, req, res, () => {
+            })
+        }catch(err){
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
 }
