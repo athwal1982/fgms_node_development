@@ -22,6 +22,18 @@ agentTrainingRouter.post('/updateStatus', agentTrainingController.UpdateStatus);
 
 agentTrainingRouter.post('/CreateTraining', agentTrainingController.CreateTraining);
 agentTrainingRouter.post('/AssignTrainingToUsers', agentTrainingController.AssignedTrainingToUsers);
+agentTrainingRouter.post('/UpdateTraining', agentTrainingController.UpdateTraining);
+agentTrainingRouter.post('/GetTrainingType', agentTrainingController.GetTrainingType);
+
+agentTrainingRouter.post('/GetTrainingList', agentTrainingController.GetTrainingList);
+
+
+
+
+
+
+
+
 
 
 

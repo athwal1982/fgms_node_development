@@ -81,6 +81,19 @@ export class AgentTrainingController {
         }
     }
 
+    UpdateTraining = async(req, res)=>{
+        try{
+            let {data, message}= await this.agentTrainingService.UpdateTraining(req.body);
+            if (data) data = await this.utilService.GZip(data);
+
+            return jsonResponseHandler(data, message, req, res, () => {
+            })
+        }catch(err){
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
     AssignedTrainingToUsers = async(req, res)=>{
         try{
             let {data, message}= await this.agentTrainingService.assignTrainingToUsers(req.body);
@@ -93,6 +106,34 @@ export class AgentTrainingController {
             })
         }
     }
+
+    GetTrainingType = async(req, res)=>{
+        try{
+            let {data, message}= await this.agentTrainingService.GetTrainingType(req.body);
+            if (data) data = await this.utilService.GZip(data);
+
+            return jsonResponseHandler(data, message, req, res, () => {
+            })
+        }catch(err){
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
+    GetTrainingList= async(req, res)=>{
+        try{
+            let {data, message}= await this.agentTrainingService.GetTrainingList(req.body);
+            // if (data) data = await this.utilService.GZip(data);
+
+            return jsonResponseHandler(data, message, req, res, () => {
+            })
+        }catch(err){
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
+
 
 
 }
