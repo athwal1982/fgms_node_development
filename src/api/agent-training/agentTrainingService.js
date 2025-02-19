@@ -598,6 +598,119 @@ export class AgentTrainingService {
         return { data: items, message: rmessage };
     }
 
+    // async GetTrainingList(body) {
+    //     console.log(body, "test");
+    //     let items = {};
+    //     let rcode = 0;
+    //     let rmessage = '';
+    //     const { TrainingMasterId, page, pageSize } = body;
+    
+    //     const currentPage = page || 1;
+    //     const size = pageSize || 10;
+    
+    //     try {
+    //         if (TrainingMasterId) {
+    //             const checkQuery = `
+    //                 SELECT 1 FROM csc_training_master WHERE TrainingMasterId = ?
+    //             `;
+    //             const [checkResult] = await sequelize.query(checkQuery, {
+    //                 replacements: [TrainingMasterId],
+    //             });
+    
+    //             if (checkResult.length === 0) {
+    //                 rcode = 0;
+    //                 rmessage = 'No training found with the provided TrainingMasterId';
+    //                 return { data: items, message: rmessage };
+    //             }
+    
+    //             const query = `
+    //                 SELECT 
+    //                     training_master.TrainingMasterId,
+    //                     training_master.TrainingTypeID,
+    //                     training_master.TrainingDate,
+    //                     training_master.InsertedUserId,
+    //                     training_master.UpdateBy,
+    //                     training_master.UpdateDateTime,
+    //                     training_master.InsertedDateTime,
+    //                     training_master.InsertIPAddress,
+    //                     training_type_master.TrainingName,
+    //                     training_type_master.TrainingCode,
+    //                     training_master.StartTime,
+    //                     training_master.EndTime
+    //                 FROM 
+    //                     fgms_spiral_node.csc_training_master AS training_master
+    //                 INNER JOIN 
+    //                     fgms_spiral_node.csc_training_type_master AS training_type_master
+    //                     ON training_master.TrainingTypeID = training_type_master.TrainingID
+    //                 WHERE 
+    //                     training_master.TrainingMasterId = ?
+    //             `;
+    
+    //             const [result] = await sequelize.query(query, {
+    //                 replacements: [TrainingMasterId],
+    //             });
+    
+    //             if (result.length > 0) {
+    //                 items = result[0];
+    //                 rcode = 1;
+    //                 rmessage = 'Training details retrieved successfully';
+    //             } else {
+    //                 rcode = 0;
+    //                 rmessage = 'No data found for the provided TrainingMasterId';
+    //             }
+    //         } else {
+    //             const query = `
+    //                 SELECT 
+    //                     training_master.TrainingMasterId,
+    //                     training_master.TrainingTypeID,
+    //                     training_master.TrainingDate,
+    //                     training_master.InsertedUserId,
+    //                     training_master.UpdateBy,
+    //                     training_master.UpdateDateTime,
+    //                     training_master.InsertedDateTime,
+    //                     training_master.InsertIPAddress,
+    //                     training_type_master.TrainingName,
+    //                     training_type_master.TrainingCode,
+    //                     training_master.StartTime,
+    //                     training_master.EndTime
+    //                 FROM 
+    //                     fgms_spiral_node.csc_training_master AS training_master
+    //                 INNER JOIN 
+    //                     fgms_spiral_node.csc_training_type_master AS training_type_master
+    //                     ON training_master.TrainingTypeID = training_type_master.TrainingID
+    //                 WHERE
+    //                     training_master.TrainingTypeID IS NOT NULL
+    //                     AND training_type_master.TrainingID IS NOT NULL
+    //                 ORDER BY
+    //                     training_master.TrainingMasterId ASC
+    //                 LIMIT ? OFFSET ?;
+    //             `;
+    //             const offset = (currentPage - 1) * size;
+    
+    //             const [result] = await sequelize.query(query, {
+    //                 replacements: [size, offset],
+    //             });
+    
+    //             if (result.length > 0) {
+    //                 items = result;
+    //                 rcode = 1;
+    //                 rmessage = 'Training list retrieved successfully';
+    //             } else {
+    //                 rcode = 0;
+    //                 rmessage = 'No training records found';
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.error('Error retrieving training list:', error.message);
+    //         rcode = 0;
+    //         rmessage = error.message || 'Something went wrong!';
+    //         throw new Error(rmessage);
+    //     }
+    
+    //     return { data: items, message: rmessage };
+    // }
+    
+
     async GetTrainingList(body) {
         console.log(body, "test");
         let items = {};
@@ -625,25 +738,33 @@ export class AgentTrainingService {
     
                 const query = `
                     SELECT 
-                        ctm.TrainingMasterId,
-                        ctm.TrainingTypeID,
-                        ctm.TrainingDate,
-                        ctm.InsertedUserId,
-                        ctm.UpdateBy,
-                        ctm.UpdateDateTime,
-                        ctm.InsertedDateTime,
-                        ctm.InsertIPAddress,
-                        cttm.TrainingName,
-                        cttm.TrainingCode,
-                        ctm.StartTime,
-                        ctm.EndTime
+                        training_master.TrainingMasterId,
+                        training_master.TrainingTypeID,
+                        training_master.TrainingDate,
+                        training_master.InsertedUserId,
+                        training_master.UpdateBy,
+                        training_master.UpdateDateTime,
+                        training_master.InsertedDateTime,
+                        training_master.InsertIPAddress,
+                        training_type_master.TrainingName,
+                        training_type_master.TrainingCode,
+                        training_master.StartTime,
+                        training_master.EndTime,
+                        app_access_created.UserDisplayName as CreatedBy,  -- UserDisplayName from the first join
+                        app_access_updated.UserDisplayName as UpdatedBy   -- UserDisplayName from the second join
                     FROM 
-                        fgms_spiral_node.csc_training_master AS ctm
+                        fgms_spiral_node.csc_training_master AS training_master
                     INNER JOIN 
-                        fgms_spiral_node.csc_training_type_master AS cttm
-                        ON ctm.TrainingTypeID = cttm.TrainingID
+                        fgms_spiral_node.csc_training_type_master AS training_type_master
+                        ON training_master.TrainingTypeID = training_type_master.TrainingID
+                    INNER JOIN
+                        fgms_spiral_node.bm_app_access AS app_access_created
+                        ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
+                    INNER JOIN
+                        fgms_spiral_node.bm_app_access AS app_access_updated
+                        ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
                     WHERE 
-                        ctm.TrainingMasterId = ?
+                        training_master.TrainingMasterId = ?
                 `;
     
                 const [result] = await sequelize.query(query, {
@@ -651,7 +772,7 @@ export class AgentTrainingService {
                 });
     
                 if (result.length > 0) {
-                    items = result[0]; 
+                    items = result[0];
                     rcode = 1;
                     rmessage = 'Training details retrieved successfully';
                 } else {
@@ -659,31 +780,38 @@ export class AgentTrainingService {
                     rmessage = 'No data found for the provided TrainingMasterId';
                 }
             } else {
-                
                 const query = `
                     SELECT 
-                        ctm.TrainingMasterId,
-                        ctm.TrainingTypeID,
-                        ctm.TrainingDate,
-                        ctm.InsertedUserId,
-                        ctm.UpdateBy,
-                        ctm.UpdateDateTime,
-                        ctm.InsertedDateTime,
-                        ctm.InsertIPAddress,
-                        cttm.TrainingName,
-                        cttm.TrainingCode,
-                        ctm.StartTime,
-                        ctm.EndTime
+                        training_master.TrainingMasterId,
+                        training_master.TrainingTypeID,
+                        training_master.TrainingDate,
+                        training_master.InsertedUserId,
+                        training_master.UpdateBy,
+                        training_master.UpdateDateTime,
+                        training_master.InsertedDateTime,
+                        training_master.InsertIPAddress,
+                        training_type_master.TrainingName,
+                        training_type_master.TrainingCode,
+                        training_master.StartTime,
+                        training_master.EndTime,
+                        app_access_created.UserDisplayName as CreatedBy,  -- UserDisplayName from the first join
+                        app_access_updated.UserDisplayName as UpdatedBy   -- UserDisplayName from the second join
                     FROM 
-                        fgms_spiral_node.csc_training_master AS ctm
+                        fgms_spiral_node.csc_training_master AS training_master
                     INNER JOIN 
-                        fgms_spiral_node.csc_training_type_master AS cttm
-                        ON ctm.TrainingTypeID = cttm.TrainingID
+                        fgms_spiral_node.csc_training_type_master AS training_type_master
+                        ON training_master.TrainingTypeID = training_type_master.TrainingID
+                    INNER JOIN
+                        fgms_spiral_node.bm_app_access AS app_access_created
+                        ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
+                    INNER JOIN
+                        fgms_spiral_node.bm_app_access AS app_access_updated
+                        ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
                     WHERE
-                        ctm.TrainingTypeID IS NOT NULL
-                        AND cttm.TrainingID IS NOT NULL
+                        training_master.TrainingTypeID IS NOT NULL
+                        AND training_type_master.TrainingID IS NOT NULL
                     ORDER BY
-                        ctm.TrainingMasterId ASC
+                        training_master.TrainingMasterId ASC
                     LIMIT ? OFFSET ?;
                 `;
                 const offset = (currentPage - 1) * size;
@@ -710,6 +838,7 @@ export class AgentTrainingService {
     
         return { data: items, message: rmessage };
     }
+    
     
     
 
