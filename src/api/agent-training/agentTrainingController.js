@@ -123,7 +123,7 @@ export class AgentTrainingController {
     GetTrainingList= async(req, res)=>{
         try{
             let {data, message}= await this.agentTrainingService.GetTrainingList(req.body);
-            // if (data) data = await this.utilService.GZip(data);
+            if (data) data = await this.utilService.GZip(data);
 
             return jsonResponseHandler(data, message, req, res, () => {
             })
