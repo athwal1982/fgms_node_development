@@ -14,11 +14,14 @@ const validator = createValidator({
     passError: true
 })
 
-agentTrainingRouter.post('/getAgentRegion',authMiddleware, agentTrainingController.getAgentRegion);
-agentTrainingRouter.post('/updateAgent', authMiddleware,agentTrainingController.updateAgent);
-agentTrainingRouter.post('/agentList', agentTrainingController.agentList);
+agentTrainingRouter.post('/getAgentRegion',authMiddleware, agentTrainingController.GetAgentRegion);
+agentTrainingRouter.post('/updateAgent', authMiddleware,agentTrainingController.UpdateAgent);
+agentTrainingRouter.post('/agentList', agentTrainingController.AgentList);
+
+agentTrainingRouter.post('/updateStatus', agentTrainingController.UpdateStatus);
+
+agentTrainingRouter.post('/CreateTraining', agentTrainingController.CreateTraining);
+agentTrainingRouter.post('/AssignTrainingToUsers', agentTrainingController.AssignedTrainingToUsers);
 
 
-
-   
 

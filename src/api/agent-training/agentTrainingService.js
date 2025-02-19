@@ -58,15 +58,17 @@ export class AgentTrainingService {
 
     
     async updateAgent(body) {
+        console.log(body, "test");
         let items = {};
         let rcode = 0;
         let rmessage = '';
+        
         try {
-            await sequelize.query(`CALL ${STORE_PROCEDURE.FGMS_UPDATE_AGENT} ( 
-                :SPUserRefId, :SPDOB, :SPMobileNumber, :SPQualification, :SPExperience,
-                :SPDesignation, :SPRegion, :SPState, :SPCity, :SPLocation, 
-                @rcode, @rmessage
-            )`, {
+            const result = await sequelize.query(`
+                CALL ${STORE_PROCEDURE.FGMS_UPDATE_AGENT} (
+                    :SPUserRefId, :SPDOB, :SPMobileNumber, :SPQualification, :SPExperience,
+                    :SPDesignation, :SPGender, :SPEmail, @rcode, @rmessage
+                )`, {
                 replacements: {
                     SPUserRefId: body.SPUserRefId,
                     SPDOB: body.SPDOB,
@@ -74,25 +76,28 @@ export class AgentTrainingService {
                     SPQualification: body.SPQualification,
                     SPExperience: body.SPExperience,
                     SPDesignation: body.SPDesignation,
-                    SPRegion: body.SPRegion,
-                    SPState: body.SPState,
-                    SPCity: body.SPCity,
-                    SPLocation: body.SPLocation
+                    SPGender: body.SPGender,
+                    SPEmail: body.SPEmail,  
                 },
-                type: sequelize.QueryTypes.RAW
-            }).then(async () => {
-                await sequelize.query(`SELECT @rcode AS code, @rmessage AS message`).then((result) => {
-                    const data = flatMap(result);
-                    rcode = +data[0].code;
-                    rmessage = data[0].message;
-    
-                    if (rcode !== 1) {
-                        throw new Error(rmessage);
-                    }
-    
-                    items = data;
-                });
+                type: sequelize.QueryTypes.RAW,
             });
+    
+            const outputResult = await sequelize.query(`
+                SELECT @rcode AS code, @rmessage AS message
+            `, {
+                type: sequelize.QueryTypes.SELECT
+            });
+    
+            const data = outputResult[0];
+            rcode = +data.code;
+            rmessage = data.message;
+    
+            if (rcode !== 1) {
+                throw new Error(rmessage);
+            }
+    
+            items = data;
+    
         } catch (err) {
             console.error(err);
             throw new Error('Something Went Wrong!');
@@ -100,153 +105,16 @@ export class AgentTrainingService {
     
         return { data: items, message: rmessage };
     }
+    
+    
 
-
-    // async agentList(body) {
-    //     let items = {};
-    //     let rcode = 0;
-    //     let rmessage = '';
-    //     try {
-    //         await sequelize.query(`CALL
-    //              ${STORE_PROCEDURE.FGMS_LIST_AGENT} (  
-    //             @rcode, @rmessage
-    //         )`, {
-    //             replacements: {},
-    //             type: sequelize.QueryTypes.RAW
-    //         }).then(async () => {
-    //             await sequelize.query(`SELECT @rcode AS code, @rmessage AS message`).then((result) => {
-    //                 console.log(result)
-    //                 const data = flatMap(result);
-    //                 rcode = +data[0].code;
-    //                 rmessage = data[0].message;
-    
-    //                 if (rcode !== 1) {
-    //                     throw new Error(rmessage);
-    //                 }
-    
-    //                 items = data;
-    //             });
-    //         });
-    //     } catch (err) {
-    //         console.error(err);
-    //         throw new Error('Something Went Wrong!');
-    //     }
-    
-    //     return { data: items, message: rmessage };
-    // }
-
-    // async agentList(body) {
-    //     let items = {};
-    //     let rcode = 0;
-    //     let rmessage = '';
-    //     let newItem = {};
-    //     try {
-    //         // Destructure pagination params from the body
-    //         const { page_size, page_number } = body;
-    
-    //         // Validate the pagination parameters (optional)
-    //         if (!page_size || !page_number || page_size <= 0 || page_number <= 0) {
-    //             throw new Error("Invalid pagination parameters");
-    //         }
-    
-    //         // Call the stored procedure with pagination params
-    //         const res = await sequelize.query(`CALL ${STORE_PROCEDURE.FGMS_LIST_AGENT}(:page_size, :page_number, @rcode, @rmessage)`, {
-    //             replacements: { page_size, page_number },
-    //             type: sequelize.QueryTypes.RAW
-    //         });
-    
-    //         // Prepare the result
-    //         newItem = {
-    //             traineeList: res
-    //         };
-    
-    //         // Fetch the output values (rcode, rmessage)
-    //         const result = await sequelize.query(`SELECT @rcode AS code, @rmessage AS message`, {
-    //             type: sequelize.QueryTypes.RAW
-    //         });
-    
-    //         // Extract rcode and rmessage
-    //         const data = result[0];
-    //         rcode = +data.code;
-    //         rmessage = data.message;
-    
-    //         // If the code indicates failure, throw an error
-    //         if (rcode !== 1) {
-    //             throw new Error(rmessage);
-    //         }
-    
-    //         // Set the response items
-    //         items = newItem;
-    
-    //     } catch (err) {
-    //         console.error(err);
-    //         throw new Error('Something Went Wrong!');
-    //     }
-        
-    //     // Return the result along with the message
-    //     return { data: items, message: rmessage };
-    // }
-
-
-    // async agentList(body) {
-    //     let items = {};
-    //     let rcode = 0;
-    //     let rmessage = '';
-    //     let newItem = {};
-    //     try {
-    //         const { page_size, page_number } = body;
-    
-    //         if (!page_size || !page_number || page_size <= 0 || page_number <= 0) {
-    //             throw new Error("Invalid pagination parameters");
-    //         }
-    
-    //         const res = await sequelize.query(`
-    //             CALL ${STORE_PROCEDURE.FGMS_LIST_AGENT}(
-    //                 :page_size,
-    //                 :page_number,
-    //                 @totalPages
-    //                 @rcode,
-    //                 @rmessage
-    //             )`, {
-    //             replacements: { page_size, page_number },
-    //             type: sequelize.QueryTypes.RAW
-    //         });
-    // console.log(res, "res")
-    //         const result = await sequelize.query(`
-    //             SELECT @rcode AS code, @rmessage AS message
-    //         `, {
-    //             type: sequelize.QueryTypes.RAW
-    //         });
-    //         let data = result[0];
-    //         data = data[0]
-    //         console.log(data, "sss")
-
-    //         rcode = +data.code;
-    //         rmessage = data.message;
-    //         if (rcode !== 1) {
-    //             throw new Error(rmessage);
-    //         }
-    //         newItem = {
-    //             traineeList: res
-    //         };
-    //         items = newItem;
-    
-    //     } catch (err) {
-    //         console.error(err);
-    //         throw new Error('Something Went Wrong!');
-    //     }
-    
-    //     return { data: items, message: rmessage };
-    // }
-    
-    
     async agentList(body) {
         let items = {};
         let rcode = 0;
         let rmessage = '';
         let totalPages = 0;
         let newItem = {};
-        
+    
         try {
             const { page_size, page_number, searchQuery, viewMode, userId } = body;
     
@@ -258,6 +126,7 @@ export class AgentTrainingService {
                 throw new Error("UserID is required for viewMode 'BYID'");
             }
     
+            // First, call the stored procedure to get the result
             const res = await sequelize.query(`
                 CALL krph_agent_list_new(
                     :page_size,
@@ -274,25 +143,27 @@ export class AgentTrainingService {
                 type: sequelize.QueryTypes.RAW
             });
     
+            // Now, query the output parameters
             const result = await sequelize.query(`
                 SELECT @rcode AS code, @rmessage AS message, @totalPages AS totalPages
             `, {
                 type: sequelize.QueryTypes.RAW
             });
     
-            let data = result[0];
-            data = data[0];
-    
+            // Extract output parameter values
+            const data = result[0][0];  // Assuming the first row contains the output values
             rcode = +data.code;
             rmessage = data.message;
             totalPages = data.totalPages;
     
+            // If procedure failed, return the error message
             if (rcode !== 1) {
                 throw new Error(rmessage);
             }
     
+            // Prepare the response data
             newItem = {
-                traineeList: res,
+                traineeList: res,  // res[0] contains the result set from the procedure
                 totalPages: totalPages
             };
             items = newItem;
@@ -304,6 +175,194 @@ export class AgentTrainingService {
     
         return { data: items, message: rmessage };
     }
+
+
+    async updateStatus(body) {
+        console.log(body, "test");
+        let items = {};
+        let rcode = 0;
+        let rmessage = '';
+        
+        try {
+            const result = await sequelize.query(`
+                CALL ${STORE_PROCEDURE.FGMS_STATUS_UPDATE} (
+                    :SPUserRefId, :SPStatus, @rcode, @rmessage
+                )`, {
+                replacements: {
+                    SPUserRefId: body.SPUserRefId,
+                    SPStatus: body.SPStatus  
+                },
+                type: sequelize.QueryTypes.RAW,
+            });
+    
+            const outputResult = await sequelize.query(`
+                SELECT @rcode AS code, @rmessage AS message
+            `, {
+                type: sequelize.QueryTypes.SELECT
+            });
+    
+            const data = outputResult[0];
+            rcode = +data.code;
+            rmessage = data.message;
+    
+            if (rcode !== 1) {
+                throw new Error(rmessage);
+            }
+    
+            items = data;
+    
+        } catch (err) {
+            console.error(err);
+            throw new Error('Something Went Wrong!');
+        }
+    
+        return { data: items, message: rmessage };
+    }
+    
+
+    async CreateTraining(body) {
+        console.log(body, "test");
+        let items = {};
+        let rcode = 0;
+        let rmessage = '';
+    
+        const {
+            TrainingHeaderName,
+            StartDate,
+            EndDate,
+            InsertedUserId,
+            UpdateBy,
+            InsertIPAddress,
+        } = body;
+    
+        if (!TrainingHeaderName) {
+            throw new Error('TrainingHeaderName is required');
+        }
+    
+        if (!StartDate) {
+            throw new Error('StartDate is required');
+        }
+    
+        if (!EndDate) {
+            throw new Error('EndDate is required');
+        }
+    
+        if (!InsertedUserId) {
+            throw new Error('InsertedUserId is required');
+        }
+    
+        if (!InsertIPAddress) {
+            throw new Error('InsertIPAddress is required');
+        }
+    
+        if (new Date(StartDate) >= new Date(EndDate)) {
+            throw new Error('StartDate must be before EndDate');
+        }
+    
+        try {
+            const query = `
+                INSERT INTO csc_training_master (
+                    TrainingHeaderName,
+                    StartDate,
+                    EndDate,
+                    InsertedUserId,
+                    UpdateBy,
+                    UpdateDateTime,
+                    InsertedDateTime,
+                    InsertIPAddress
+                ) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)
+            `;
+    
+            const [result] = await sequelize.query(query, {
+                replacements: [
+                    TrainingHeaderName,
+                    StartDate,
+                    EndDate,
+                    InsertedUserId,
+                    UpdateBy || null,
+                    InsertIPAddress,
+                ],
+            });
+    
+            rcode = 1;
+            rmessage = 'Training created successfully';
+            items = { insertId: result.insertId };
+    
+        } catch (error) {
+            console.error('Error creating training:', error.message);
+            rcode = 0;
+            rmessage = error.message || 'Something Went Wrong!';
+            throw new Error(rmessage);
+        }
+    
+        return { data: items, message: rmessage };
+    }
+    
+
+
+    async assignTrainingToUsers(body) {
+        console.log(body, "test");
+        let items = {};
+        let rcode = 0;
+        let rmessage = '';
+    
+        const { TrainingMasterId, UserIds, InsertedIPAddress } = body;
+    
+        if (!TrainingMasterId) {
+            throw new Error('TrainingMasterId is required');
+        }
+    
+        if (!UserIds) {
+            throw new Error('UserIds is required');
+        }
+    
+        const userIdsArray = UserIds.split(',').map(userId => userId.trim());
+    
+        if (userIdsArray.length === 0) {
+            throw new Error('UserIds cannot be empty');
+        }
+    
+        if (!InsertedIPAddress) {
+            throw new Error('InsertedIPAddress is required');
+        }
+    
+        try {
+            const query = `
+                INSERT INTO csc_training_assigment (
+                    TrainingMasterId,
+                    UserId,
+                    InsertedDateTime,
+                    InsertedIPAddress
+                ) VALUES ?
+            `;
+    
+            const values = userIdsArray.map(userId => [
+                TrainingMasterId,
+                userId,
+                new Date(),
+                InsertedIPAddress,
+            ]);
+    
+            const [result] = await sequelize.query(query, {
+                replacements: [values],
+            });
+    
+            rcode = 1;
+            rmessage = 'Training assigned to users successfully';
+            items = { affectedRows: result.affectedRows };
+    
+        } catch (error) {
+            console.error('Error assigning training to users:', error.message);
+            rcode = 0;
+            rmessage = error.message || 'Something Went Wrong!';
+            throw new Error(rmessage);
+        }
+    
+        return { data: items, message: rmessage };
+    }
+    
+    
+    
     
     
     
