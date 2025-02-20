@@ -711,7 +711,7 @@ export class AgentTrainingService {
     // }
     
 
-    async GetTrainingList(body) {
+  /*   async GetTrainingList(body) {
         console.log(body, "test");
         let items = {};
         let rcode = 0;
@@ -837,9 +837,99 @@ export class AgentTrainingService {
         }
     
         return { data: items, message: rmessage };
-    }
+    } */
     
     
+        async GetTrainingList(body) {
+            console.log(body, "test");
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+            const { TrainingMasterId, page, pageSize, startDate, endDate } = body;
+        
+            const currentPage = page || 1;
+            const size = pageSize || 10;
+        
+            try {
+                let query = `
+                    SELECT 
+                        training_master.TrainingMasterId,
+                        training_master.TrainingTypeID,
+                        training_master.TrainingDate,
+                        training_master.InsertedUserId,
+                        training_master.UpdateBy,
+                        training_master.UpdateDateTime,
+                        training_master.InsertedDateTime,
+                        training_master.InsertIPAddress,
+                        training_type_master.TrainingName,
+                        training_type_master.TrainingCode,
+                        training_master.StartTime,
+                        training_master.EndTime,
+                        app_access_created.UserDisplayName as CreatedBy,  -- UserDisplayName from the first join
+                        app_access_updated.UserDisplayName as UpdatedBy   -- UserDisplayName from the second join
+                    FROM 
+                        fgms_spiral_node.csc_training_master AS training_master
+                    INNER JOIN 
+                        fgms_spiral_node.csc_training_type_master AS training_type_master
+                        ON training_master.TrainingTypeID = training_type_master.TrainingID
+                    INNER JOIN
+                        fgms_spiral_node.bm_app_access AS app_access_created
+                        ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
+                    INNER JOIN
+                        fgms_spiral_node.bm_app_access AS app_access_updated
+                        ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
+                    WHERE
+                        training_master.TrainingTypeID IS NOT NULL
+                        AND training_type_master.TrainingID IS NOT NULL
+                `;
+        
+                // If a specific TrainingMasterId is provided, filter by it
+                if (TrainingMasterId) {
+                    query += ` AND training_master.TrainingMasterId = ?`;
+                }
+        
+                // If date filters are provided, add them to the WHERE clause
+                if (startDate && endDate) {
+                    query += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
+                } else if (startDate) {
+                    query += ` AND training_master.TrainingDate >= ?`;
+                } else if (endDate) {
+                    query += ` AND training_master.TrainingDate <= ?`;
+                }
+        
+                query += ` ORDER BY training_master.TrainingMasterId ASC LIMIT ? OFFSET ?;`;
+        
+                const replacements = [];
+                
+                // Add replacements for filters
+                if (TrainingMasterId) replacements.push(TrainingMasterId);
+                if (startDate) replacements.push(startDate);
+                if (endDate) replacements.push(endDate);
+                replacements.push(size, (currentPage - 1) * size);
+        
+                const [result] = await sequelize.query(query, {
+                    replacements: replacements,
+                });
+        
+                if (result.length > 0) {
+                    items = result;
+                    rcode = 1;
+                    rmessage = 'Training list retrieved successfully';
+                } else {
+                    rcode = 0;
+                    rmessage = 'No training records found';
+                }
+        
+            } catch (error) {
+                console.error('Error retrieving training list:', error.message);
+                rcode = 0;
+                rmessage = error.message || 'Something went wrong!';
+                throw new Error(rmessage);
+            }
+        
+            return { data: items, message: rmessage };
+        }
+        
     
 
 
