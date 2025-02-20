@@ -757,10 +757,10 @@ export class AgentTrainingService {
                     INNER JOIN 
                         fgms_spiral_node.csc_training_type_master AS training_type_master
                         ON training_master.TrainingTypeID = training_type_master.TrainingID
-                    INNER JOIN
+                    LEFT JOIN
                         fgms_spiral_node.bm_app_access AS app_access_created
                         ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
-                    INNER JOIN
+                    LEFT JOIN
                         fgms_spiral_node.bm_app_access AS app_access_updated
                         ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
                     WHERE 
@@ -801,10 +801,10 @@ export class AgentTrainingService {
                     INNER JOIN 
                         fgms_spiral_node.csc_training_type_master AS training_type_master
                         ON training_master.TrainingTypeID = training_type_master.TrainingID
-                    INNER JOIN
+                    LEFT JOIN
                         fgms_spiral_node.bm_app_access AS app_access_created
                         ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
-                    INNER JOIN
+                    LEFT JOIN
                         fgms_spiral_node.bm_app_access AS app_access_updated
                         ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
                     WHERE
