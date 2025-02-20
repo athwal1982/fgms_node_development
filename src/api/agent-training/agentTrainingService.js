@@ -841,7 +841,6 @@ export class AgentTrainingService {
     
     
         async GetTrainingList(body) {
-            console.log(body, "test");
             let items = {};
             let rcode = 0;
             let rmessage = '';
@@ -865,17 +864,17 @@ export class AgentTrainingService {
                         training_type_master.TrainingCode,
                         training_master.StartTime,
                         training_master.EndTime,
-                        app_access_created.UserDisplayName as CreatedBy,  -- UserDisplayName from the first join
-                        app_access_updated.UserDisplayName as UpdatedBy   -- UserDisplayName from the second join
+                        app_access_created.UserDisplayName as CreatedBy,  
+                        app_access_updated.UserDisplayName as UpdatedBy  
                     FROM 
                         fgms_spiral_node.csc_training_master AS training_master
                     INNER JOIN 
                         fgms_spiral_node.csc_training_type_master AS training_type_master
                         ON training_master.TrainingTypeID = training_type_master.TrainingID
-                    INNER JOIN
+                    LEFT JOIN
                         fgms_spiral_node.bm_app_access AS app_access_created
                         ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
-                    INNER JOIN
+                    LEFT JOIN
                         fgms_spiral_node.bm_app_access AS app_access_updated
                         ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
                     WHERE
