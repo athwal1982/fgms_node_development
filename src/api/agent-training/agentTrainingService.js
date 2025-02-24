@@ -855,11 +855,13 @@ export class AgentTrainingService {
                 rcode = +data.code;
                 rmessage = data.message;
         
+                console.log(data)
                 if (rcode !== 1) {
-                    throw new Error(rmessage);
+                    // throw new Error(rmessage);
+                    // return 
+                    return { data: [], message: rmessage };
                 }
         
-                // Assign the results to 'items'
                 items = data;
         
             } catch (err) {
@@ -867,7 +869,6 @@ export class AgentTrainingService {
                 throw new Error('Something Went Wrong!');
             }
         
-            // Return the result and message
             return { data: result, message: rmessage };
         }
         
