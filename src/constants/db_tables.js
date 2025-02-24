@@ -146,4 +146,5 @@ FGMS_USER_ASSIGNED_TICKET_LIST:`${NAME}.assignedTicketView_csc_index`,
     FGMS_STATUS_UPDATE:`${NAME}.krph_agent_status_update`,
     FGMS_TRAINING_CENTER_LIST:`${NAME}.csc_training_center_list`,
     FGMS_TRAINING_UPCOMINT:`${NAME}.csc_training_upcoming`,
+    FGMS_CSC_TRAINING_DATA_BINDING:`${NAME}.csc_training_data_binding`,
 };

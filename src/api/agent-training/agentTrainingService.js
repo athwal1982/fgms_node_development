@@ -226,7 +226,7 @@ export class AgentTrainingService {
 
 
 
-    async CreateTraining(body) {
+   /*  async CreateTraining(body) {
         let items = {};
         let rcode = 0;
         let rmessage = '';
@@ -324,9 +324,115 @@ export class AgentTrainingService {
         }
     
         return { data: items, message: rmessage };
-    }
+    } */
     
+        async CreateTraining(body) {
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
         
+            
+          
+
+
+            let {
+                TrainingTypeID,
+                TrainingDate,
+                StartTime,
+                EndTime,
+                Duration,         
+                TrainingTitle,     
+                objCommon: { insertedUserID, insertedIPAddress },
+                UpdateBy = null,
+            } = body;
+        
+            console.log(insertedIPAddress);
+            const indianTime = new Date(TrainingDate);
+            indianTime.setHours(indianTime.getHours() + 5);  // Add 5 hours to the date
+                indianTime.setMinutes(indianTime.getMinutes() + 30);  // Add 30 minutes to the date
+
+        console.log(indianTime);
+        
+            if (!TrainingTypeID) {
+                throw new Error('TrainingTypeID is required');
+            }
+        
+            if (!TrainingDate) {
+                throw new Error('TrainingDate is required');
+            }
+        
+            if (!insertedUserID) {
+                throw new Error('InsertedUserId is required');
+            }
+        
+            if (!insertedIPAddress) {
+                throw new Error('InsertIPAddress is required');
+            }
+        
+            if (StartTime && EndTime) {
+                const start = new Date(`1970-01-01T${StartTime}Z`);
+                const end = new Date(`1970-01-01T${EndTime}Z`);
+                if (start >= end) {
+                    throw new Error('StartTime must be before EndTime');
+                }
+            }
+        
+            if (!TrainingTitle) {
+                throw new Error('TrainingTitle is required');
+            }
+        
+            if (!Duration) {
+                throw new Error('Duration is required');
+            }
+        
+            try {
+                const query = `
+                    INSERT INTO csc_training_master (
+                        TrainingTypeID,
+                        TrainingDate,
+                        StartTime,
+                        EndTime,
+                        Duration,             
+                        TrainingTitle,         
+                        InsertedUserId,
+                        UpdateBy,
+                        UpdateDateTime,
+                        InsertedDateTime,
+                        InsertIPAddress
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
+                `;
+        
+                console.log(query);
+        
+                const [result] = await sequelize.query(query, {
+                    replacements: [
+                        TrainingTypeID,         
+                        indianTime,            
+                        StartTime || null,       
+                        EndTime || null,         
+                        Duration,                
+                        TrainingTitle,          
+                        insertedUserID,          
+                        UpdateBy,                
+                        insertedIPAddress,      
+                    ],
+                });
+        
+                rcode = 1;
+                rmessage = 'Training created successfully';
+                items = { insertId: result.insertId };  
+        
+            } catch (error) {
+                console.log(error);
+                // Handle error if something goes wrong
+                console.error('Error creating training:', error.message);
+                rcode = 0;
+                rmessage = error.message || 'Something went wrong!';
+                throw new Error(rmessage);
+            }
+        
+            return { data: items, message: rmessage };
+        }
         
 
 
@@ -720,6 +826,51 @@ export class AgentTrainingService {
         
             return { data: result, message: rmessage };
         }
+        
+
+        async CscTrainingDataBinding(body) {
+            console.log(body, "test");
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+            let result;
+            try {
+                result = await sequelize.query(`
+                    CALL csc_training_data_binding(
+                        @rcode, @rmessage, :SPMODE
+                    )`, {
+                    replacements: {
+                        SPMODE: body.SPMODE  
+                    },
+                    type: sequelize.QueryTypes.RAW,
+                });
+        
+                const outputResult = await sequelize.query(`
+                    SELECT @rcode AS code, @rmessage AS message
+                `, {
+                    type: sequelize.QueryTypes.SELECT
+                });
+        
+                const data = outputResult[0];
+                rcode = +data.code;
+                rmessage = data.message;
+        
+                if (rcode !== 1) {
+                    throw new Error(rmessage);
+                }
+        
+                // Assign the results to 'items'
+                items = data;
+        
+            } catch (err) {
+                console.error(err);
+                throw new Error('Something Went Wrong!');
+            }
+        
+            // Return the result and message
+            return { data: result, message: rmessage };
+        }
+        
         
 
         

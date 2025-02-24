@@ -159,6 +159,19 @@ export class AgentTrainingController {
         }
     }
 
+    CscTrainingDataBinding= async(req, res)=>{
+        try{
+            let {data, message}= await this.agentTrainingService.CscTrainingDataBinding(req.body);
+            if (data) data = await this.utilService.GZip(data);
+
+            return jsonResponseHandler(data, message, req, res, () => {
+            })
+        }catch(err){
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
 
 
 
