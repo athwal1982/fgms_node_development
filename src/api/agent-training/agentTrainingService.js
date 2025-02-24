@@ -116,12 +116,14 @@ export class AgentTrainingService {
         let newItem = {};
     
         try {
-            const { page_size, page_number, searchQuery, viewMode, userId } = body;
+            const { page_size, page_number, searchQuery, viewMode, userId, centerMasterID } = body;
     
+            // Validate pagination parameters
             if (!page_size || !page_number || page_size <= 0 || page_number <= 0) {
                 throw new Error("Invalid pagination parameters");
             }
     
+            // Validate viewMode for 'BYID'
             if (viewMode === 'BYID' && (!userId || userId === '')) {
                 throw new Error("UserID is required for viewMode 'BYID'");
             }
@@ -134,12 +136,13 @@ export class AgentTrainingService {
                     :searchQuery,
                     :viewMode,
                     :userId,
+                    :centerMasterID,
                     @rcode,
                     @rmessage,
                     @totalPages
                 );
             `, {
-                replacements: { page_size, page_number, searchQuery, viewMode, userId },
+                replacements: { page_size, page_number, searchQuery, viewMode, userId, centerMasterID },
                 type: sequelize.QueryTypes.RAW
             });
     
@@ -175,6 +178,7 @@ export class AgentTrainingService {
     
         return { data: items, message: rmessage };
     }
+    
 
 
     async updateStatus(body) {
@@ -220,165 +224,97 @@ export class AgentTrainingService {
     }
     
 
-    // async CreateTraining(body) {
-    //     console.log(body, "test");
-    //     let items = {};
-    //     let rcode = 0;
-    //     let rmessage = '';
-    
-    //     const {
-    //         TrainingHeaderName,
-    //         StartDate,
-    //         EndDate,
-    //         InsertedUserId,
-    //         UpdateBy,
-    //         InsertIPAddress,
-    //     } = body;
-    
-    //     if (!TrainingHeaderName) {
-    //         throw new Error('TrainingHeaderName is required');
-    //     }
-    
-    //     if (!StartDate) {
-    //         throw new Error('StartDate is required');
-    //     }
-    
-    //     if (!EndDate) {
-    //         throw new Error('EndDate is required');
-    //     }
-    
-    //     if (!InsertedUserId) {
-    //         throw new Error('InsertedUserId is required');
-    //     }
-    
-    //     if (!InsertIPAddress) {
-    //         throw new Error('InsertIPAddress is required');
-    //     }
-    
-    //     if (new Date(StartDate) >= new Date(EndDate)) {
-    //         throw new Error('StartDate must be before EndDate');
-    //     }
-    
-    //     try {
-    //         const query = `
-    //             INSERT INTO csc_training_master (
-    //                 TrainingHeaderName,
-    //                 StartDate,
-    //                 EndDate,
-    //                 InsertedUserId,
-    //                 UpdateBy,
-    //                 UpdateDateTime,
-    //                 InsertedDateTime,
-    //                 InsertIPAddress
-    //             ) VALUES (?, ?, ?, ?, ?, NOW(), NOW(), ?)
-    //         `;
-    
-    //         const [result] = await sequelize.query(query, {
-    //             replacements: [
-    //                 TrainingHeaderName,
-    //                 StartDate,
-    //                 EndDate,
-    //                 InsertedUserId,
-    //                 UpdateBy || null,
-    //                 InsertIPAddress,
-    //             ],
-    //         });
-    
-    //         rcode = 1;
-    //         rmessage = 'Training created successfully';
-    //         items = { insertId: result.insertId };
-    
-    //     } catch (error) {
-    //         console.error('Error creating training:', error.message);
-    //         rcode = 0;
-    //         rmessage = error.message || 'Something Went Wrong!';
-    //         throw new Error(rmessage);
-    //     }
-    
-    //     return { data: items, message: rmessage };
-    // }
-
-    async CreateTraining(body) {
-        console.log(body, "test");
-        let items = {};
-        let rcode = 0;
-        let rmessage = '';
-    
-        const {
-            TrainingTypeID,
-            TrainingDate,  // Renamed from StartDate
-            StartTime,
-            EndTime,
-            InsertedUserId,
-            UpdateBy,
-            InsertIPAddress,
-        } = body;
-    
-        if (!TrainingTypeID) {
-            throw new Error('TrainingTypeID is required');
-        }
-    
-        if (!TrainingDate) {
-            throw new Error('TrainingDate is required');
-        }
-    
-        if (!InsertedUserId) {
-            throw new Error('InsertedUserId is required');
-        }
-    
-        if (!InsertIPAddress) {
-            throw new Error('InsertIPAddress is required');
-        }
-    
-        // Validate that StartTime is before EndTime if both are provided
-        if (StartTime && EndTime && new Date(`1970-01-01T${StartTime}Z`) >= new Date(`1970-01-01T${EndTime}Z`)) {
-            throw new Error('StartTime must be before EndTime');
-        }
-    
-        try {
-            // Insert training record into the database
-            const query = `
-                INSERT INTO csc_training_master (
-                    TrainingTypeID,
-                    TrainingDate,  -- Use the new TrainingDate column
-                    StartTime,
-                    EndTime,
-                    InsertedUserId,
-                    UpdateBy,
-                    UpdateDateTime,
-                    InsertedDateTime,
-                    InsertIPAddress
-                ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
-            `;
-    
-            const [result] = await sequelize.query(query, {
-                replacements: [
-                    TrainingTypeID,
-                    TrainingDate,
-                    StartTime || null,
-                    EndTime || null,
-                    InsertedUserId,
-                    UpdateBy || null,
-                    InsertIPAddress,
-                ],
-            });
-    
-            rcode = 1;
-            rmessage = 'Training created successfully';
-            items = { insertId: result.insertId };
-    
-        } catch (error) {
-            console.error('Error creating training:', error.message);
-            rcode = 0;
-            rmessage = error.message || 'Something went wrong!';
-            throw new Error(rmessage);
-        }
-    
-        return { data: items, message: rmessage };
-    }
-    
 
 
+        async CreateTraining(body) {
+        
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+        console.log(body)
+            let {
+                TrainingTypeID,
+                TrainingDate,
+                StartTime,
+                EndTime,
+                objCommon: { insertedUserID, insertedIPAddress },
+                UpdateBy = null,
+            } = body;
+
+            console.log(insertedIPAddress)
+        
+            if (!TrainingTypeID) {
+                throw new Error('TrainingTypeID is required');
+            }
+        
+            if (!TrainingDate) {
+                throw new Error('TrainingDate is required');
+            }
+        
+            if (!insertedUserID) {
+                throw new Error('InsertedUserId is required');
+            }
+        
+            if (!insertedIPAddress) {
+                throw new Error('InsertIPAddress is required');
+            }
+        
+            if (StartTime && EndTime) {
+                const start = new Date(`1970-01-01T${StartTime}Z`);
+                const end = new Date(`1970-01-01T${EndTime}Z`);
+                if (start >= end) {
+                    throw new Error('StartTime must be before EndTime');
+                }
+            }
+        
+            try {
+                const query = `
+                    INSERT INTO csc_training_master (
+                        TrainingTypeID,
+                        TrainingDate,
+                        StartTime,
+                        EndTime,
+                        InsertedUserId,
+                        UpdateBy,
+                        UpdateDateTime,
+                        InsertedDateTime,
+                        InsertIPAddress
+                    ) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
+                `;
+
+                console.log(query)
+        
+                const [result] = await sequelize.query(query, {
+                    replacements: [
+                        TrainingTypeID,          // TrainingTypeID from the body
+                        TrainingDate,            // TrainingDate from the body
+                        StartTime || null,       // StartTime from the body (null if not provided)
+                        EndTime || null,         // EndTime from the body (null if not provided)
+                        insertedUserID,          // InsertedUserID from objCommon
+                        UpdateBy,                // UpdateBy (defaults to null if not provided)
+                        insertedIPAddress,         // InsertIPAddress from objCommon
+                    ],
+                });
+        
+                
+                rcode = 1;
+                rmessage = 'Training created successfully';
+                items = { insertId: result.insertId };  // Store the insertId from the result
+        
+            } catch (error) {
+                console.log(error)
+                // Handle error if something goes wrong
+                console.error('Error creating training:', error.message);
+                rcode = 0;
+                rmessage = error.message || 'Something went wrong!';
+                throw new Error(rmessage);
+            }
+        
+            
+            return { data: items, message: rmessage };
+        }
+        
+        
 
 
     async assignTrainingToUsers(body) {
@@ -598,247 +534,7 @@ export class AgentTrainingService {
         return { data: items, message: rmessage };
     }
 
-    // async GetTrainingList(body) {
-    //     console.log(body, "test");
-    //     let items = {};
-    //     let rcode = 0;
-    //     let rmessage = '';
-    //     const { TrainingMasterId, page, pageSize } = body;
-    
-    //     const currentPage = page || 1;
-    //     const size = pageSize || 10;
-    
-    //     try {
-    //         if (TrainingMasterId) {
-    //             const checkQuery = `
-    //                 SELECT 1 FROM csc_training_master WHERE TrainingMasterId = ?
-    //             `;
-    //             const [checkResult] = await sequelize.query(checkQuery, {
-    //                 replacements: [TrainingMasterId],
-    //             });
-    
-    //             if (checkResult.length === 0) {
-    //                 rcode = 0;
-    //                 rmessage = 'No training found with the provided TrainingMasterId';
-    //                 return { data: items, message: rmessage };
-    //             }
-    
-    //             const query = `
-    //                 SELECT 
-    //                     training_master.TrainingMasterId,
-    //                     training_master.TrainingTypeID,
-    //                     training_master.TrainingDate,
-    //                     training_master.InsertedUserId,
-    //                     training_master.UpdateBy,
-    //                     training_master.UpdateDateTime,
-    //                     training_master.InsertedDateTime,
-    //                     training_master.InsertIPAddress,
-    //                     training_type_master.TrainingName,
-    //                     training_type_master.TrainingCode,
-    //                     training_master.StartTime,
-    //                     training_master.EndTime
-    //                 FROM 
-    //                     fgms_spiral_node.csc_training_master AS training_master
-    //                 INNER JOIN 
-    //                     fgms_spiral_node.csc_training_type_master AS training_type_master
-    //                     ON training_master.TrainingTypeID = training_type_master.TrainingID
-    //                 WHERE 
-    //                     training_master.TrainingMasterId = ?
-    //             `;
-    
-    //             const [result] = await sequelize.query(query, {
-    //                 replacements: [TrainingMasterId],
-    //             });
-    
-    //             if (result.length > 0) {
-    //                 items = result[0];
-    //                 rcode = 1;
-    //                 rmessage = 'Training details retrieved successfully';
-    //             } else {
-    //                 rcode = 0;
-    //                 rmessage = 'No data found for the provided TrainingMasterId';
-    //             }
-    //         } else {
-    //             const query = `
-    //                 SELECT 
-    //                     training_master.TrainingMasterId,
-    //                     training_master.TrainingTypeID,
-    //                     training_master.TrainingDate,
-    //                     training_master.InsertedUserId,
-    //                     training_master.UpdateBy,
-    //                     training_master.UpdateDateTime,
-    //                     training_master.InsertedDateTime,
-    //                     training_master.InsertIPAddress,
-    //                     training_type_master.TrainingName,
-    //                     training_type_master.TrainingCode,
-    //                     training_master.StartTime,
-    //                     training_master.EndTime
-    //                 FROM 
-    //                     fgms_spiral_node.csc_training_master AS training_master
-    //                 INNER JOIN 
-    //                     fgms_spiral_node.csc_training_type_master AS training_type_master
-    //                     ON training_master.TrainingTypeID = training_type_master.TrainingID
-    //                 WHERE
-    //                     training_master.TrainingTypeID IS NOT NULL
-    //                     AND training_type_master.TrainingID IS NOT NULL
-    //                 ORDER BY
-    //                     training_master.TrainingMasterId ASC
-    //                 LIMIT ? OFFSET ?;
-    //             `;
-    //             const offset = (currentPage - 1) * size;
-    
-    //             const [result] = await sequelize.query(query, {
-    //                 replacements: [size, offset],
-    //             });
-    
-    //             if (result.length > 0) {
-    //                 items = result;
-    //                 rcode = 1;
-    //                 rmessage = 'Training list retrieved successfully';
-    //             } else {
-    //                 rcode = 0;
-    //                 rmessage = 'No training records found';
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error('Error retrieving training list:', error.message);
-    //         rcode = 0;
-    //         rmessage = error.message || 'Something went wrong!';
-    //         throw new Error(rmessage);
-    //     }
-    
-    //     return { data: items, message: rmessage };
-    // }
-    
-
-  /*   async GetTrainingList(body) {
-        console.log(body, "test");
-        let items = {};
-        let rcode = 0;
-        let rmessage = '';
-        const { TrainingMasterId, page, pageSize } = body;
-    
-        const currentPage = page || 1;
-        const size = pageSize || 10;
-    
-        try {
-            if (TrainingMasterId) {
-                const checkQuery = `
-                    SELECT 1 FROM csc_training_master WHERE TrainingMasterId = ?
-                `;
-                const [checkResult] = await sequelize.query(checkQuery, {
-                    replacements: [TrainingMasterId],
-                });
-    
-                if (checkResult.length === 0) {
-                    rcode = 0;
-                    rmessage = 'No training found with the provided TrainingMasterId';
-                    return { data: items, message: rmessage };
-                }
-    
-                const query = `
-                    SELECT 
-                        training_master.TrainingMasterId,
-                        training_master.TrainingTypeID,
-                        training_master.TrainingDate,
-                        training_master.InsertedUserId,
-                        training_master.UpdateBy,
-                        training_master.UpdateDateTime,
-                        training_master.InsertedDateTime,
-                        training_master.InsertIPAddress,
-                        training_type_master.TrainingName,
-                        training_type_master.TrainingCode,
-                        training_master.StartTime,
-                        training_master.EndTime,
-                        app_access_created.UserDisplayName as CreatedBy,  -- UserDisplayName from the first join
-                        app_access_updated.UserDisplayName as UpdatedBy   -- UserDisplayName from the second join
-                    FROM 
-                        fgms_spiral_node.csc_training_master AS training_master
-                    INNER JOIN 
-                        fgms_spiral_node.csc_training_type_master AS training_type_master
-                        ON training_master.TrainingTypeID = training_type_master.TrainingID
-                    LEFT JOIN
-                        fgms_spiral_node.bm_app_access AS app_access_created
-                        ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
-                    LEFT JOIN
-                        fgms_spiral_node.bm_app_access AS app_access_updated
-                        ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
-                    WHERE 
-                        training_master.TrainingMasterId = ?
-                `;
-    
-                const [result] = await sequelize.query(query, {
-                    replacements: [TrainingMasterId],
-                });
-    
-                if (result.length > 0) {
-                    items = result[0];
-                    rcode = 1;
-                    rmessage = 'Training details retrieved successfully';
-                } else {
-                    rcode = 0;
-                    rmessage = 'No data found for the provided TrainingMasterId';
-                }
-            } else {
-                const query = `
-                    SELECT 
-                        training_master.TrainingMasterId,
-                        training_master.TrainingTypeID,
-                        training_master.TrainingDate,
-                        training_master.InsertedUserId,
-                        training_master.UpdateBy,
-                        training_master.UpdateDateTime,
-                        training_master.InsertedDateTime,
-                        training_master.InsertIPAddress,
-                        training_type_master.TrainingName,
-                        training_type_master.TrainingCode,
-                        training_master.StartTime,
-                        training_master.EndTime,
-                        app_access_created.UserDisplayName as CreatedBy,  -- UserDisplayName from the first join
-                        app_access_updated.UserDisplayName as UpdatedBy   -- UserDisplayName from the second join
-                    FROM 
-                        fgms_spiral_node.csc_training_master AS training_master
-                    INNER JOIN 
-                        fgms_spiral_node.csc_training_type_master AS training_type_master
-                        ON training_master.TrainingTypeID = training_type_master.TrainingID
-                    LEFT JOIN
-                        fgms_spiral_node.bm_app_access AS app_access_created
-                        ON training_master.InsertedUserId = app_access_created.AppAccessID  -- Join for CreatedBy
-                    LEFT JOIN
-                        fgms_spiral_node.bm_app_access AS app_access_updated
-                        ON training_master.UpdateBy = app_access_updated.AppAccessID  -- Join for UpdatedBy
-                    WHERE
-                        training_master.TrainingTypeID IS NOT NULL
-                        AND training_type_master.TrainingID IS NOT NULL
-                    ORDER BY
-                        training_master.TrainingMasterId ASC
-                    LIMIT ? OFFSET ?;
-                `;
-                const offset = (currentPage - 1) * size;
-    
-                const [result] = await sequelize.query(query, {
-                    replacements: [size, offset],
-                });
-    
-                if (result.length > 0) {
-                    items = result;
-                    rcode = 1;
-                    rmessage = 'Training list retrieved successfully';
-                } else {
-                    rcode = 0;
-                    rmessage = 'No training records found';
-                }
-            }
-        } catch (error) {
-            console.error('Error retrieving training list:', error.message);
-            rcode = 0;
-            rmessage = error.message || 'Something went wrong!';
-            throw new Error(rmessage);
-        }
-    
-        return { data: items, message: rmessage };
-    } */
-    
+ 
     
         async GetTrainingList(body) {
             let items = {};
@@ -928,6 +624,52 @@ export class AgentTrainingService {
         
             return { data: items, message: rmessage };
         }
+
+
+
+
+        async CenterList(body) {
+            console.log(body, "test");
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+            let result
+            
+            try {
+                 result = await sequelize.query(`
+                    CALL ${STORE_PROCEDURE.FGMS_TRAINING_CENTER_LIST} (
+                         @rcode, @rmessage
+                    )`, {
+                    replacements: {},
+                    type: sequelize.QueryTypes.RAW,
+                });
+        
+                const outputResult = await sequelize.query(`
+                    SELECT @rcode AS code, @rmessage AS message
+                `, {
+                    type: sequelize.QueryTypes.SELECT
+                });
+        
+                const data = outputResult[0];
+                rcode = +data.code;
+                rmessage = data.message;
+        
+                if (rcode !== 1) {
+                    throw new Error(rmessage);
+                }
+        
+                items = data;
+        
+            } catch (err) {
+                console.error(err);
+                throw new Error('Something Went Wrong!');
+            }
+        
+            return { data: result, message: rmessage };
+        }
+        
+
+        
         
     
 

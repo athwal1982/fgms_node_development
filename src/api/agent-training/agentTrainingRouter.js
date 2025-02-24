@@ -26,6 +26,7 @@ agentTrainingRouter.post('/UpdateTraining', agentTrainingController.UpdateTraini
 agentTrainingRouter.post('/GetTrainingType', agentTrainingController.GetTrainingType);
 
 agentTrainingRouter.post('/GetTrainingList', agentTrainingController.GetTrainingList);
+agentTrainingRouter.post('/CenterList', agentTrainingController.GetCenterList)
 
 
 
