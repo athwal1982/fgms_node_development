@@ -148,4 +148,6 @@ FGMS_USER_ASSIGNED_TICKET_LIST:`${NAME}.assignedTicketView_csc_index`,
     FGMS_TRAINING_UPCOMINT:`${NAME}.csc_training_upcoming`,
     FGMS_CSC_TRAINING_DATA_BINDING:`${NAME}.csc_training_data_binding`,
     CSC_TRAINING_USER_ASSIGN_MANAGE:`${NAME}.csc_training_user_assign_manage` ,
+    CSC_TRAINING_CREATE:`${NAME}.csc_create_training`,
+    CSC_TRAINING_AGENTS:`${NAME}.krph_agent_list_new`
 };
