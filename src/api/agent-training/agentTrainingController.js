@@ -175,7 +175,7 @@ export class AgentTrainingController {
     cscUserTrainingAssignManage = async (req, res) => {
         try {
 
-            let {data, message} = await this.userService.cscUserTrainingAssignManage(req.body)
+            let {data, message} = await this.agentTrainingService.cscUserTrainingAssignManage(req.body)
 
             // compress
             if (data) data = await this.utilService.GZip(data);

@@ -330,43 +330,35 @@ export class AgentTrainingService {
             let items = {};
             let rcode = 0;
             let rmessage = '';
-        
-            
-          
-
-
             let {
                 TrainingTypeID,
                 TrainingDate,
                 StartTime,
                 EndTime,
                 Duration,         
-                TrainingTitle,     
+                TrainingTitle,  
+                TrainingLink,  
                 objCommon: { insertedUserID, insertedIPAddress },
                 UpdateBy = null,
             } = body;
         
-            console.log(insertedIPAddress);
-            const indianTime = new Date(TrainingDate);
-            indianTime.setHours(indianTime.getHours() + 5);  // Add 5 hours to the date
-                indianTime.setMinutes(indianTime.getMinutes() + 30);  // Add 30 minutes to the date
-
-        console.log(indianTime);
-        
             if (!TrainingTypeID) {
                 throw new Error('TrainingTypeID is required');
             }
-        
             if (!TrainingDate) {
                 throw new Error('TrainingDate is required');
             }
-        
             if (!insertedUserID) {
                 throw new Error('InsertedUserId is required');
             }
-        
             if (!insertedIPAddress) {
                 throw new Error('InsertIPAddress is required');
+            }
+            if (!TrainingTitle) {
+                throw new Error('TrainingTitle is required');
+            }
+            if (!Duration) {
+                throw new Error('Duration is required');
             }
         
             if (StartTime && EndTime) {
@@ -377,12 +369,12 @@ export class AgentTrainingService {
                 }
             }
         
-            if (!TrainingTitle) {
-                throw new Error('TrainingTitle is required');
-            }
+            const indianTime = new Date(TrainingDate);
+            indianTime.setHours(indianTime.getHours() + 5); 
+            indianTime.setMinutes(indianTime.getMinutes() + 30); 
         
-            if (!Duration) {
-                throw new Error('Duration is required');
+            if (TrainingLink && !isValidUrl(TrainingLink)) {
+                throw new Error('TrainingLink must be a valid URL');
             }
         
             try {
@@ -393,7 +385,8 @@ export class AgentTrainingService {
                         StartTime,
                         EndTime,
                         Duration,             
-                        TrainingTitle,         
+                        TrainingTitle,  
+                        TrainingLink,       
                         InsertedUserId,
                         UpdateBy,
                         UpdateDateTime,
@@ -402,8 +395,6 @@ export class AgentTrainingService {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
                 `;
         
-                console.log(query);
-        
                 const [result] = await sequelize.query(query, {
                     replacements: [
                         TrainingTypeID,         
@@ -411,7 +402,8 @@ export class AgentTrainingService {
                         StartTime || null,       
                         EndTime || null,         
                         Duration,                
-                        TrainingTitle,          
+                        TrainingTitle,  
+                        TrainingLink || null,    
                         insertedUserID,          
                         UpdateBy,                
                         insertedIPAddress,      
@@ -424,8 +416,6 @@ export class AgentTrainingService {
         
             } catch (error) {
                 console.log(error);
-                // Handle error if something goes wrong
-                console.error('Error creating training:', error.message);
                 rcode = 0;
                 rmessage = error.message || 'Something went wrong!';
                 throw new Error(rmessage);
@@ -433,6 +423,16 @@ export class AgentTrainingService {
         
             return { data: items, message: rmessage };
         }
+        
+         isValidUrl(url) {
+            try {
+                const parsedUrl = new URL(url);
+                return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+            } catch (error) {
+                return false;
+            }
+        }
+        
         
 
 
@@ -893,7 +893,7 @@ export class AgentTrainingService {
                     SPCenterID:body.centerID,
                     SPCSCAppAccessTypeID:body.cSCAppAccessTypeID,
                     SPTrainingMasterID: body.trainingMasterID,
-                    SPUserID: +body.userID,
+                    SPUserID: +body.userID,                    
                     SPInsertUserID: +body.objCommon.insertedUserID,
                     SPInsertIPAddress: body.objCommon.insertedIPAddress,
                 },

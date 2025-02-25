@@ -147,4 +147,5 @@ FGMS_USER_ASSIGNED_TICKET_LIST:`${NAME}.assignedTicketView_csc_index`,
     FGMS_TRAINING_CENTER_LIST:`${NAME}.csc_training_center_list`,
     FGMS_TRAINING_UPCOMINT:`${NAME}.csc_training_upcoming`,
     FGMS_CSC_TRAINING_DATA_BINDING:`${NAME}.csc_training_data_binding`,
+    CSC_TRAINING_USER_ASSIGN_MANAGE:`${NAME}.csc_training_user_assign_manage` ,
 };
