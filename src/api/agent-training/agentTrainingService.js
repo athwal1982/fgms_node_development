@@ -871,6 +871,52 @@ export class AgentTrainingService {
         
             return { data: result, message: rmessage };
         }
+
+        async cscUserTrainingAssignManage(body) {
+            let items = {};
+            let message = '';
+            await sequelize.query(`CALL ${STORE_PROCEDURE.CSC_TRAINING_USER_ASSIGN_MANAGE}(
+            :SPViewMode,
+            :SPTrainingUserAssignmentID,
+            :SPCenterID
+            :SPCSCAppAccessTypeID,
+            @SPUnUserID,
+            :SPTrainingMasterID,
+            :SPUserID,
+            @SPUUserID,
+            :SPInsertUserID,
+            :SPInsertIPAddress,
+            @rcode, @rmessage)`, {
+                replacements: {
+                    SPViewMode: body.viewMode,
+                    SPTrainingUserAssignmentID: body.trainingUserAssignmentID,
+                    SPCenterID:body.centerID,
+                    SPCSCAppAccessTypeID:body.cSCAppAccessTypeID,
+                    SPTrainingMasterID: body.trainingMasterID,
+                    SPUserID: +body.userID,
+                    SPInsertUserID: +body.objCommon.insertedUserID,
+                    SPInsertIPAddress: body.objCommon.insertedIPAddress,
+                },
+                type: sequelize.QueryTypes.RAW,
+            }).then(async (res) => {
+                await sequelize.query('select @SPUnUserID AS UnAssignUserID,  @SPUUserID AS AssignUserID, @rcode AS code, @rmessage AS message').then((result) => {
+                    const data = flatMap(result);
+                    if (+data[0].code === 0) {
+                        throw new Error(data[0].message)
+                    }
+                    if (body.viewMode === 'ASSIGN') {
+                        items = {UnAssignuser: data[0].UnAssignUserID, AssignedID: data[0].AssignUserID};
+                    } else {
+                        items = {CscAssignManage: res};
+                    }
+                    message = data[0].message;
+                })
+            })
+            return {data: items, message};
+        }
+      
+
+
         
         
 

@@ -29,6 +29,8 @@ agentTrainingRouter.post('/GetTrainingList', agentTrainingController.GetTraining
 agentTrainingRouter.post('/CenterList', agentTrainingController.GetCenterList)
 agentTrainingRouter.post('/UpcomingTrainingList', agentTrainingController.UpcomingTrainingList)
 agentTrainingRouter.post('/CscTrainingDataBinding', agentTrainingController.CscTrainingDataBinding)
+agentTrainingRouter.post('/CSCUserTrainingAssignManage', agentTrainingController.cscUserTrainingAssignManage)
+
 
 
 
