@@ -815,9 +815,10 @@ export class AgentTrainingService {
             let rmessage = '';
             let result;
             try {
+                // Calling the stored procedure with input parameters
                 result = await sequelize.query(`
                     CALL csc_training_data_binding(
-                        @rcode, @rmessage, :SPMODE, :SPCenterID
+                        :SPMODE, :SPCenterID, @rcode, @rmessage
                     )`, {
                     replacements: {
                         SPMODE: body.SPMODE,
@@ -826,6 +827,7 @@ export class AgentTrainingService {
                     type: sequelize.QueryTypes.RAW,
                 });
         
+                // Fetching the output parameters (rcode and rmessage)
                 const outputResult = await sequelize.query(`
                     SELECT @rcode AS code, @rmessage AS message
                 `, {
@@ -837,19 +839,24 @@ export class AgentTrainingService {
                 rmessage = data.message;
         
                 console.log(data);
+        
+                // If rcode is not 1, return an empty result with the message
                 if (rcode !== 1) {
                     return { data: [], message: rmessage };
                 }
         
-                items = data;
+                // Otherwise, return the result from the procedure
+                items = result;
         
             } catch (err) {
                 console.error(err);
                 throw new Error('Something Went Wrong!');
             }
         
-            return { data: result, message: rmessage };
+            // Return the final result with data and message
+            return { data: items, message: rmessage };
         }
+        
         
 
         async cscUserTrainingAssignManage(body) {
