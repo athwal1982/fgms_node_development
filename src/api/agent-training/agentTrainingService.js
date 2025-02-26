@@ -865,7 +865,7 @@ export class AgentTrainingService {
             await sequelize.query(`CALL ${STORE_PROCEDURE.CSC_TRAINING_USER_ASSIGN_MANAGE}(
             :SPViewMode,
             :SPTrainingUserAssignmentID,
-            :SPCenterID
+            :SPCenterID,
             :SPCSCAppAccessTypeID,
             @SPUnUserID,
             :SPTrainingMasterID,
@@ -880,7 +880,7 @@ export class AgentTrainingService {
                     SPCenterID:body.centerID,
                     SPCSCAppAccessTypeID:body.cSCAppAccessTypeID,
                     SPTrainingMasterID: body.trainingMasterID,
-                    SPUserID: +body.userID,                    
+                    SPUserID: body.userID,                    
                     SPInsertUserID: +body.objCommon.insertedUserID,
                     SPInsertIPAddress: body.objCommon.insertedIPAddress,
                 },
@@ -901,6 +901,10 @@ export class AgentTrainingService {
             })
             return {data: items, message};
         }
+      
+
+
+
 
         
         // async CreateTraining(body) {
