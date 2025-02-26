@@ -543,7 +543,7 @@ export class AgentTrainingService {
 
  
     
-        async GetTrainingList(body) {
+       /*  async GetTrainingList(body) {
             let items = {};
             let rcode = 0;
             let rmessage = '';
@@ -629,9 +629,102 @@ export class AgentTrainingService {
             }
         
             return { data: items, message: rmessage };
-        }
+        } */
 
 
+            async GetTrainingList(body) {
+                let items = {};
+                let rcode = 0;
+                let rmessage = '';
+                const { TrainingMasterId, page, pageSize, startDate, endDate } = body;
+            
+                const currentPage = page || 1;
+                const size = pageSize || 10;
+            
+                try {
+                    let query = `
+                        SELECT 
+                            training_master.TrainingMasterId,
+                            training_master.TrainingTypeID,
+                            training_master.TrainingDate,
+                            training_master.InsertedUserId,
+                            training_master.UpdateBy,
+                            training_master.UpdateDateTime,
+                            training_master.InsertedDateTime,
+                            training_master.InsertIPAddress,
+                            training_type_master.TrainingName,
+                            training_type_master.TrainingCode,
+                            training_master.StartTime,
+                            training_master.EndTime,
+                            app_access_created.UserDisplayName as CreatedBy,  
+                            app_access_updated.UserDisplayName as UpdatedBy,
+                            CASE
+                                WHEN tua.TrainingUserAssignmentID IS NOT NULL THEN 1
+                                ELSE 0
+                            END AS Assigned
+                        FROM 
+                            fgms_spiral_node.csc_training_master AS training_master
+                        INNER JOIN 
+                            fgms_spiral_node.csc_training_type_master AS training_type_master
+                            ON training_master.TrainingTypeID = training_type_master.TrainingID
+                        LEFT JOIN
+                            fgms_spiral_node.bm_app_access AS app_access_created
+                            ON training_master.InsertedUserId = app_access_created.AppAccessID
+                        LEFT JOIN
+                            fgms_spiral_node.bm_app_access AS app_access_updated
+                            ON training_master.UpdateBy = app_access_updated.AppAccessID
+                        LEFT JOIN
+                            fgms_spiral_node.csc_training_user_assigment AS tua
+                            ON training_master.TrainingMasterId = tua.TrainingMasterID
+                        WHERE
+                            training_master.TrainingTypeID IS NOT NULL
+                            AND training_type_master.TrainingID IS NOT NULL
+                    `;
+            
+                    if (TrainingMasterId) {
+                        query += ` AND training_master.TrainingMasterId = ?`;
+                    }
+            
+                    if (startDate && endDate) {
+                        query += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
+                    } else if (startDate) {
+                        query += ` AND training_master.TrainingDate >= ?`;
+                    } else if (endDate) {
+                        query += ` AND training_master.TrainingDate <= ?`;
+                    }
+            
+                    query += ` ORDER BY training_master.TrainingMasterId ASC LIMIT ? OFFSET ?;`;
+            
+                    const replacements = [];
+            
+                    if (TrainingMasterId) replacements.push(TrainingMasterId);
+                    if (startDate) replacements.push(startDate);
+                    if (endDate) replacements.push(endDate);
+                    replacements.push(size, (currentPage - 1) * size);
+            
+                    const [result] = await sequelize.query(query, {
+                        replacements: replacements,
+                    });
+            
+                    if (result.length > 0) {
+                        items = result;
+                        rcode = 1;
+                        rmessage = 'Training list retrieved successfully';
+                    } else {
+                        rcode = 0;
+                        rmessage = 'No training records found';
+                    }
+            
+                } catch (error) {
+                    console.error('Error retrieving training list:', error.message);
+                    rcode = 0;
+                    rmessage = error.message || 'Something went wrong!';
+                    throw new Error(rmessage);
+                }
+            
+                return { data: items, message: rmessage };
+            }
+            
 
 
         async CenterList(body) {
@@ -724,10 +817,11 @@ export class AgentTrainingService {
             try {
                 result = await sequelize.query(`
                     CALL csc_training_data_binding(
-                        @rcode, @rmessage, :SPMODE
+                        @rcode, @rmessage, :SPMODE, :SPCenterID
                     )`, {
                     replacements: {
-                        SPMODE: body.SPMODE  
+                        SPMODE: body.SPMODE,
+                        SPCenterID: body.SPCenterID
                     },
                     type: sequelize.QueryTypes.RAW,
                 });
@@ -742,10 +836,8 @@ export class AgentTrainingService {
                 rcode = +data.code;
                 rmessage = data.message;
         
-                console.log(data)
+                console.log(data);
                 if (rcode !== 1) {
-                    // throw new Error(rmessage);
-                    // return 
                     return { data: [], message: rmessage };
                 }
         
@@ -758,6 +850,7 @@ export class AgentTrainingService {
         
             return { data: result, message: rmessage };
         }
+        
 
         async cscUserTrainingAssignManage(body) {
             let items = {};
@@ -919,7 +1012,7 @@ export class AgentTrainingService {
             let rcode = 0;
             let rmessage = '';
             let result;
-        
+        console.log(body);
             const {
                 TrainingTypeID,
                 TrainingDate,
@@ -928,12 +1021,18 @@ export class AgentTrainingService {
                 Duration,         
                 TrainingTitle,  
                 TrainingLink,  
-                objCommon: { insertedUserID, insertedIPAddress },
+                objCommon,
             } = body;
         
             try {
+                // Check if objCommon exists and has the required properties
+                if (!objCommon || !objCommon.insertedUserID || !objCommon.insertedIPAddress) {
+                    throw new Error('Missing required user information in objCommon.');
+                }
+                const formattedTrainingDate = new Date(TrainingDate).toISOString().slice(0, 19).replace('T', ' ');
+        
                 result = await sequelize.query(`
-                    CALL  ${STORE_PROCEDURE.CSC_TRAINING_CREATE}(
+                    CALL ${STORE_PROCEDURE.CSC_TRAINING_CREATE}(
                         :SPTrainingTypeID, 
                         :SPTrainingDate, 
                         :SPStartTime, 
@@ -948,15 +1047,15 @@ export class AgentTrainingService {
                     )
                 `, {
                     replacements: {
-                        TrainingTypeID,
-                        TrainingDate,
-                        StartTime,
-                        EndTime,
-                        Duration,
-                        TrainingTitle,
-                        TrainingLink,
-                        InsertUserID:objCommon.insertedUserID,
-                        InsertIPAddress:objCommon.insertedIPAddress
+                        SPTrainingTypeID: TrainingTypeID,           // Correct replacement for :SPTrainingTypeID
+                        SPTrainingDate: formattedTrainingDate,               // Correct replacement for :SPTrainingDate
+                        SPStartTime: StartTime,                     // Correct replacement for :SPStartTime
+                        SPEndTime: EndTime,                         // Correct replacement for :SPEndTime
+                        SPDuration: Duration,                       // Correct replacement for :SPDuration
+                        SPTrainingTitle: TrainingTitle,             // Correct replacement for :SPTrainingTitle
+                        SPTrainingLink: TrainingLink,               // Correct replacement for :SPTrainingLink
+                        SPInsertUserID: objCommon.insertedUserID,   // Correct replacement for :SPInsertUserID
+                        SPInsertIPAddress: objCommon.insertedIPAddress, // Correct replacement for :SPInsertIPAddress
                     },
                     type: sequelize.QueryTypes.RAW
                 });
@@ -967,16 +1066,13 @@ export class AgentTrainingService {
                     type: sequelize.QueryTypes.SELECT
                 });
         
-                console.log(outputResult, "outputResult")
+                console.log(outputResult, "outputResult");
                 const data = outputResult[0];
                 rcode = +data.code;
                 rmessage = data.message;
-
-
         
                 if (rcode !== 1) {
                     return { data: [], message: rmessage };
-
                 }
         
                 items = { insertedTrainingID: result[0].InsertedTrainingID };
@@ -988,6 +1084,8 @@ export class AgentTrainingService {
         
             return { data: items, message: rmessage };
         }
+        
+        
         
   
 }
