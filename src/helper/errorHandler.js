@@ -45,7 +45,7 @@ export const jsonResponseHandler = (data, message, req, res, next) => {
 	})
 }
 
-export const jsonResponseHandlerOther = (data, totalPages, message, req, res, next) => {
+export const jsonResponseHandlerOther = (data,  message, req, res, next) => {
 	console.log(data)
     const messages = message?.msg || message;
 	let newData = data
@@ -57,7 +57,7 @@ export const jsonResponseHandlerOther = (data, totalPages, message, req, res, ne
         responseCode: message?.code || "1",
         responseMessage: messages || constant.ResponseStatus.SUCCESS,
         jsonString: null,
-        totalPages: totalPages,      
+         
     });
 };
 
