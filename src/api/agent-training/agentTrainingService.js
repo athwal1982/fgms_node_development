@@ -865,10 +865,14 @@ export class AgentTrainingService {
                                 rmessage = 'No training records found';
                             }
                            
+                            let resultInfo ={
+                                items,
+                                totalPages :totalPages
+                            }
                          
                             // Format the response
                             return {
-                                data: items,
+                                data: resultInfo,
                                 message: rmessage,
                                 totalPages: totalPages,   // Include total pages for pagination
                                 totalCount: totalCount,   // Include total count of records
