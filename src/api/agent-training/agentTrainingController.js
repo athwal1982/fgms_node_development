@@ -125,7 +125,6 @@ export class AgentTrainingController {
             let {data, message}= await this.agentTrainingService.GetTrainingList(req.body);
 
             if (data) data = await this.utilService.GZip(data);
-            console.log(data, "data")
 
             return jsonResponseHandlerOther(data,message, req, res, () => {
             })
