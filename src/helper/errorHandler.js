@@ -44,3 +44,20 @@ export const jsonResponseHandler = (data, message, req, res, next) => {
 		recordCount: 0
 	})
 }
+
+export const jsonResponseHandlerOther = (data, totalPages, message, req, res, next) => {
+	console.log(data)
+    const messages = message?.msg || message;
+	let newData = data
+	
+   
+    res.status(200).send({
+        responseObject: null,
+        responseDynamic: newData || null,
+        responseCode: message?.code || "1",
+        responseMessage: messages || constant.ResponseStatus.SUCCESS,
+        jsonString: null,
+        totalPages: totalPages,      
+    });
+};
+

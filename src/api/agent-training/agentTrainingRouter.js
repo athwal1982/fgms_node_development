@@ -30,6 +30,14 @@ agentTrainingRouter.post('/CenterList', agentTrainingController.GetCenterList)
 agentTrainingRouter.post('/UpcomingTrainingList', agentTrainingController.UpcomingTrainingList)
 agentTrainingRouter.post('/CscTrainingDataBinding', agentTrainingController.CscTrainingDataBinding)
 agentTrainingRouter.post('/CSCUserTrainingAssignManage', agentTrainingController.cscUserTrainingAssignManage)
+agentTrainingRouter.post('/CSCCenterWiseTraining', agentTrainingController.CenterWiseTrainingList)
+agentTrainingRouter.post('/CSCAgentBYID', agentTrainingController.CSCAgentById)
+agentTrainingRouter.post('/CSCUpdateAgentBYID', agentTrainingController.CSCUpdateAgentById)
+
+
+
+
+
 
 
 

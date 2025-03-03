@@ -1,6 +1,6 @@
 
 
-import {jsonErrorHandler, jsonResponseHandler} from "../../helper/errorHandler";
+import {jsonErrorHandler, jsonResponseHandler, jsonResponseHandlerOther} from "../../helper/errorHandler";
 import {AgentTrainingService} from "./agentTrainingService.js";
 import {UtilService} from "../../helper/utilService.js";
 import {constant} from "../../constants/constant.js";
@@ -122,10 +122,12 @@ export class AgentTrainingController {
 
     GetTrainingList= async(req, res)=>{
         try{
-            let {data, message}= await this.agentTrainingService.GetTrainingList(req.body);
-            if (data) data = await this.utilService.GZip(data);
+            let {data, message,totalPages}= await this.agentTrainingService.GetTrainingList(req.body);
 
-            return jsonResponseHandler(data, message, req, res, () => {
+            if (data) data = await this.utilService.GZip(data);
+            console.log(data, "data")
+
+            return jsonResponseHandlerOther(data, totalPages,message, req, res, () => {
             })
         }catch(err){
             return jsonErrorHandler(err, req, res, () => {
@@ -188,12 +190,64 @@ export class AgentTrainingController {
         }
     }
 
+    CenterWiseTrainingList = async (req, res) => {
+        try {
+
+            let {data, message} = await this.agentTrainingService.CenterWiseTraining(req.body)
+            console.log(data)
+            // compress
+            if (data) data = await this.utilService.GZip(data);
+
+            // return response
+            return jsonResponseHandler(data, message, req, res, () => {})
+        } catch (err) {
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
+
+
+   
+
+    CSCUpdateAgentById = async (req, res) => {
+        try {
+
+            let {data, message} = await this.agentTrainingService.CSCAgentUpdateIdWise(req.body)
+            console.log(data)
+            // compress
+            if (data) data = await this.utilService.GZip(data);
+
+            // return response
+            return jsonResponseHandler(data, message, req, res, () => {})
+        } catch (err) {
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
+    CSCAgentById = async (req, res) => {
+        try {
+
+            let {data, message} = await this.agentTrainingService.CSCAgentIdWise(req.body)
+            console.log(data)
+            // compress
+            if (data) data = await this.utilService.GZip(data);
+
+            // return response
+            return jsonResponseHandler(data, message, req, res, () => {})
+        } catch (err) {
+            return jsonErrorHandler(err, req, res, () => {
+            })
+        }
+    }
+
 
 
 
 
     
-
+    
 
 
 

@@ -632,98 +632,258 @@ export class AgentTrainingService {
         } */
 
 
-            async GetTrainingList(body) {
-                let items = {};
-                let rcode = 0;
-                let rmessage = '';
-                const { TrainingMasterId, page, pageSize, startDate, endDate } = body;
-            
-                const currentPage = page || 1;
-                const size = pageSize || 10;
-            
-                try {
-                    let query = `
-                        SELECT 
-                            training_master.TrainingMasterId,
-                            training_master.TrainingTypeID,
-                            training_master.TrainingDate,
-                            training_master.InsertedUserId,
-                            training_master.UpdateBy,
-                            training_master.UpdateDateTime,
-                            training_master.InsertedDateTime,
-                            training_master.InsertIPAddress,
-                            training_type_master.TrainingName,
-                            training_type_master.TrainingCode,
-                            training_master.StartTime,
-                            training_master.EndTime,
-                            app_access_created.UserDisplayName as CreatedBy,  
-                            app_access_updated.UserDisplayName as UpdatedBy,
-                            CASE
-                                WHEN tua.TrainingUserAssignmentID IS NOT NULL THEN 1
-                                ELSE 0
-                            END AS Assigned
-                        FROM 
-                            fgms_spiral_node.csc_training_master AS training_master
-                        INNER JOIN 
-                            fgms_spiral_node.csc_training_type_master AS training_type_master
-                            ON training_master.TrainingTypeID = training_type_master.TrainingID
-                        LEFT JOIN
-                            fgms_spiral_node.bm_app_access AS app_access_created
-                            ON training_master.InsertedUserId = app_access_created.AppAccessID
-                        LEFT JOIN
-                            fgms_spiral_node.bm_app_access AS app_access_updated
-                            ON training_master.UpdateBy = app_access_updated.AppAccessID
-                        LEFT JOIN
-                            fgms_spiral_node.csc_training_user_assigment AS tua
-                            ON training_master.TrainingMasterId = tua.TrainingMasterID
-                        WHERE
-                            training_master.TrainingTypeID IS NOT NULL
-                            AND training_type_master.TrainingID IS NOT NULL
-                    `;
-            
-                    if (TrainingMasterId) {
-                        query += ` AND training_master.TrainingMasterId = ?`;
-                    }
-            
-                    if (startDate && endDate) {
-                        query += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
-                    } else if (startDate) {
-                        query += ` AND training_master.TrainingDate >= ?`;
-                    } else if (endDate) {
-                        query += ` AND training_master.TrainingDate <= ?`;
-                    }
-            
-                    query += ` ORDER BY training_master.TrainingMasterId ASC LIMIT ? OFFSET ?;`;
-            
-                    const replacements = [];
-            
-                    if (TrainingMasterId) replacements.push(TrainingMasterId);
-                    if (startDate) replacements.push(startDate);
-                    if (endDate) replacements.push(endDate);
-                    replacements.push(size, (currentPage - 1) * size);
-            
-                    const [result] = await sequelize.query(query, {
-                        replacements: replacements,
-                    });
-            
-                    if (result.length > 0) {
-                        items = result;
-                        rcode = 1;
-                        rmessage = 'Training list retrieved successfully';
-                    } else {
+                /* 
+                async GetTrainingList(body) {
+                    let items = {};
+                    let rcode = 0;
+                    let rmessage = '';
+                    const { TrainingMasterId, page, pageSize, startDate, endDate } = body;
+                
+                    const currentPage = page || 1;
+                    const size = pageSize || 10;
+                
+                    try {
+                        let query = `
+                            SELECT  
+                                training_master.TrainingMasterId,
+                                training_master.TrainingTypeID,
+                                training_master.TrainingDate,
+                                training_master.InsertedUserId,
+                                training_master.UpdateBy,
+                                training_master.UpdateDateTime,
+                                training_master.InsertedDateTime,
+                                training_master.StartTime,
+                                training_master.EndTime,
+                                training_master.InsertIPAddress,
+                                training_master.TrainingTitle,
+                                training_type_master.TrainingName AS TrainingType,
+                                app_access_created.UserDisplayName as CreatedBy,  
+                                app_access_created.UserDisplayName as UpdatedBy,
+                                training_master.TrainingLink 
+                            FROM 
+                                fgms_spiral_node.csc_training_master AS training_master
+                                LEFT JOIN fgms_spiral_node.csc_training_type_master AS training_type_master
+                                    ON training_master.TrainingTypeID = training_type_master.TrainingID
+                                LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_created
+                                    ON training_master.InsertedUserId = app_access_created.AppAccessID
+                                LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_updated
+                                    ON training_master.UpdateBy = app_access_updated.AppAccessID
+                        `;
+                
+                        if (TrainingMasterId) {
+                            query += ` WHERE training_master.TrainingMasterId = ?`;
+                        }
+                
+                        if (startDate && endDate) {
+                            query += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
+                        } else if (startDate) {
+                            query += ` AND training_master.TrainingDate >= ?`;
+                        } else if (endDate) {
+                            query += ` AND training_master.TrainingDate <= ?`;
+                        }
+                
+                        const countQuery = `
+                            SELECT COUNT(*) AS totalCount
+                            FROM fgms_spiral_node.csc_training_master AS training_master
+                            LEFT JOIN fgms_spiral_node.csc_training_type_master AS training_type_master
+                                ON training_master.TrainingTypeID = training_type_master.TrainingID
+                            LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_created
+                                ON training_master.InsertedUserId = app_access_created.AppAccessID
+                            LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_updated
+                                ON training_master.UpdateBy = app_access_updated.AppAccessID
+                        `;
+                
+                        if (TrainingMasterId) {
+                            query += ` WHERE training_master.TrainingMasterId = ?`;
+                        }
+                
+                        if (startDate && endDate) {
+                            query += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
+                        } else if (startDate) {
+                            query += ` AND training_master.TrainingDate >= ?`;
+                        } else if (endDate) {
+                            query += ` AND training_master.TrainingDate <= ?`;
+                        }
+                
+                        const countReplacements = [];
+                        if (TrainingMasterId) countReplacements.push(TrainingMasterId);
+                        if (startDate) countReplacements.push(startDate);
+                        if (endDate) countReplacements.push(endDate);
+                
+                        const [[countResult]] = await sequelize.query(countQuery, {
+                            replacements: countReplacements,
+                        });
+                
+                        const totalCount = countResult.totalCount;
+                        const totalPages = Math.ceil(totalCount / size); 
+                
+                        query += ` ORDER BY training_master.InsertedDateTime DESC LIMIT ? OFFSET ?;`;
+                
+                        const replacements = [];
+                        if (TrainingMasterId) replacements.push(TrainingMasterId);
+                        if (startDate) replacements.push(startDate);
+                        if (endDate) replacements.push(endDate);
+                        replacements.push(size, (currentPage - 1) * size);
+                
+                        const [result] = await sequelize.query(query, {
+                            replacements: replacements,
+                        });
+                
+                        if (result.length > 0) {
+                            items = result;
+                            rcode = 1;
+                            rmessage = 'Training list retrieved successfully';
+                        } else {
+                            rcode = 0;
+                            rmessage = 'No training records found';
+                        }
+                        let newData = []
+
+                        return {
+                            data: items,
+                            message: rmessage,
+                            totalPages: totalPages,  
+                            totalCount: totalCount,  
+                        };
+                    } catch (error) {
+                        console.error('Error retrieving training list:', error.message);
                         rcode = 0;
-                        rmessage = 'No training records found';
+                        rmessage = error.message || 'Something went wrong!';
+                        throw new Error(rmessage);
                     }
-            
-                } catch (error) {
-                    console.error('Error retrieving training list:', error.message);
-                    rcode = 0;
-                    rmessage = error.message || 'Something went wrong!';
-                    throw new Error(rmessage);
-                }
-            
-                return { data: items, message: rmessage };
-            }
+                } */
+
+                    async GetTrainingList(body) {
+                        let items = {};
+                        let rcode = 0;
+                        let rmessage = '';
+                        const { TrainingMasterId, page, pageSize, startDate, endDate } = body;
+                    
+                        const currentPage = page || 1;
+                        const size = pageSize || 10;
+                    
+                        try {
+                            let query = `
+                                SELECT  
+                                    training_master.TrainingMasterId,
+                                    training_master.TrainingTypeID,
+                                    training_master.TrainingDate,
+                                    training_master.InsertedUserId,
+                                    training_master.UpdateBy,
+                                    training_master.UpdateDateTime,
+                                    training_master.InsertedDateTime,
+                                    training_master.StartTime,
+                                    training_master.EndTime,
+                                    training_master.InsertIPAddress,
+                                    training_master.TrainingTitle,
+                                    training_type_master.TrainingName AS TrainingType,
+                                    app_access_created.UserDisplayName as CreatedBy,  
+                                    app_access_created.UserDisplayName as UpdatedBy,
+                                    training_master.TrainingLink 
+                                FROM 
+                                    fgms_spiral_node.csc_training_master AS training_master
+                                    LEFT JOIN fgms_spiral_node.csc_training_type_master AS training_type_master
+                                        ON training_master.TrainingTypeID = training_type_master.TrainingID
+                                    LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_created
+                                        ON training_master.InsertedUserId = app_access_created.AppAccessID
+                                    LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_updated
+                                        ON training_master.UpdateBy = app_access_updated.AppAccessID
+                            `;
+                    
+                            // Apply filter for TrainingMasterId if provided
+                            if (TrainingMasterId) {
+                                query += ` WHERE training_master.TrainingMasterId = ?`;
+                            }
+                    
+                            // Apply date filters if provided
+                            if (startDate && endDate) {
+                                query += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
+                            } else if (startDate) {
+                                query += ` AND training_master.TrainingDate >= ?`;
+                            } else if (endDate) {
+                                query += ` AND training_master.TrainingDate <= ?`;
+                            }
+                    
+                            // Count query to get total records
+                            const countQuery = `
+                                SELECT COUNT(*) AS totalCount
+                                FROM fgms_spiral_node.csc_training_master AS training_master
+                                LEFT JOIN fgms_spiral_node.csc_training_type_master AS training_type_master
+                                    ON training_master.TrainingTypeID = training_type_master.TrainingID
+                                LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_created
+                                    ON training_master.InsertedUserId = app_access_created.AppAccessID
+                                LEFT JOIN fgms_spiral_node.bm_app_access AS app_access_updated
+                                    ON training_master.UpdateBy = app_access_updated.AppAccessID
+                            `;
+                    
+                            // Apply filters to the count query
+                            if (TrainingMasterId) {
+                                countQuery += ` WHERE training_master.TrainingMasterId = ?`;
+                            }
+                    
+                            if (startDate && endDate) {
+                                countQuery += ` AND training_master.TrainingDate BETWEEN ? AND ?`;
+                            } else if (startDate) {
+                                countQuery += ` AND training_master.TrainingDate >= ?`;
+                            } else if (endDate) {
+                                countQuery += ` AND training_master.TrainingDate <= ?`;
+                            }
+                    
+                            const countReplacements = [];
+                            if (TrainingMasterId) countReplacements.push(TrainingMasterId);
+                            if (startDate) countReplacements.push(startDate);
+                            if (endDate) countReplacements.push(endDate);
+                    
+                            // Get the total count for pagination
+                            const [[countResult]] = await sequelize.query(countQuery, {
+                                replacements: countReplacements,
+                            });
+                    
+                            const totalCount = countResult.totalCount;
+                            const totalPages = Math.ceil(totalCount / size);
+                    
+                            // Now apply LIMIT and OFFSET to the main query
+                            query += ` ORDER BY training_master.InsertedDateTime DESC LIMIT ? OFFSET ?;`;
+                    
+                            const replacements = [];
+                            if (TrainingMasterId) replacements.push(TrainingMasterId);
+                            if (startDate) replacements.push(startDate);
+                            if (endDate) replacements.push(endDate);
+                            replacements.push(size, (currentPage - 1) * size);
+                    
+                            // Fetch the paginated result
+                            const [result] = await sequelize.query(query, {
+                                replacements: replacements,
+                            });
+                    
+                            if (result.length > 0) {
+                                items = result;
+                                rcode = 1;
+                                rmessage = 'Training list retrieved successfully';
+                            } else {
+                                rcode = 0;
+                                rmessage = 'No training records found';
+                            }
+                           
+                         
+                            // Format the response
+                            return {
+                                data: items,
+                                message: rmessage,
+                                totalPages: totalPages,   // Include total pages for pagination
+                                totalCount: totalCount,   // Include total count of records
+                            };
+                        } catch (error) {
+                            console.error('Error retrieving training list:', error.message);
+                            rcode = 0;
+                            rmessage = error.message || 'Something went wrong!';
+                            throw new Error(rmessage);
+                        }
+                    }
+                    
+                
+
+                    
             
 
 
@@ -1095,6 +1255,151 @@ export class AgentTrainingService {
         
             return { data: items, message: rmessage };
         }
+        
+
+        async CenterWiseTraining(body) {
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+            let result;
+
+            console.log(body)
+            try {
+                result = await sequelize.query(`
+                    CALL ${STORE_PROCEDURE.CSC_TRAINING_CENTERWISE_TRAINING}(
+                        :SPUserID, :page_number, :page_size, :SPMode, @rcode, @rmessage
+                    )`, {
+                    replacements: {
+                        SPUserID: body.SPUserID,
+                        page_number: body.page_number || 1,
+                        page_size: body.page_size || 1000,
+                        SPMode: body.SPMode
+                    },
+                    type: sequelize.QueryTypes.RAW,
+                });
+        
+                const outputResult = await sequelize.query(`
+                    SELECT @rcode AS code, @rmessage AS message
+                `, {
+                    type: sequelize.QueryTypes.SELECT
+                });
+        
+                const data = outputResult[0];
+                rcode = +data.code;
+                rmessage = data.message;
+        
+                if (rcode !== 1) {
+                    return { data: [], message: rmessage };
+                }
+        
+                items = result;
+        
+            } catch (err) {
+                console.error(err);
+                throw new Error('Something Went Wrong!');
+            }
+        
+            return { data: items, message: rmessage };
+        }
+
+        
+
+        async CSCAgentUpdateIdWise(body) {
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+            let result;
+        
+            console.log(body);
+            try {
+                result = await sequelize.query(`
+                    CALL ${STORE_PROCEDURE.CSC_TRAINING_UPDATE_AGENT_BY_ID}(
+                        :SPUserID, 
+                        :email, 
+                        :gender, 
+                        :experience, 
+                        :designation, 
+                        @rcode, 
+                        @rmessage
+                    )`, {
+                    replacements: {
+                        SPUserID: body.SPUserID,
+                        email: body.email,
+                        gender: body.gender,
+                        experience: body.experience,
+                        designation: body.designation
+                    },
+                    type: sequelize.QueryTypes.RAW,
+                });
+        
+                const outputResult = await sequelize.query(`
+                    SELECT @rcode AS code, @rmessage AS message
+                `, {
+                    type: sequelize.QueryTypes.SELECT
+                });
+        
+                const data = outputResult[0];
+                rcode = +data.code;
+                rmessage = data.message;
+        
+                if (rcode !== 1) {
+                    return { data: [], message: rmessage };
+                }
+        
+                items = result;
+        
+            } catch (err) {
+                console.error(err);
+                throw new Error('Something Went Wrong!');
+            }
+        
+            return { data: items, message: rmessage };
+        }
+        
+
+        async CSCAgentIdWise(body) {
+            let items = {};
+            let rcode = 0;
+            let rmessage = '';
+            let result;
+
+            console.log(body)
+            try {
+                result = await sequelize.query(`
+                    CALL ${STORE_PROCEDURE.CSC_TRAINING_AGENT_BY_ID}(
+                        :SPUserID, @rcode, @rmessage
+                    )`, {
+                    replacements: {
+                        SPUserID: body.SPUserID,
+                       
+                    },
+                    type: sequelize.QueryTypes.RAW,
+                });
+        
+                const outputResult = await sequelize.query(`
+                    SELECT @rcode AS code, @rmessage AS message
+                `, {
+                    type: sequelize.QueryTypes.SELECT
+                });
+        
+                const data = outputResult[0];
+                rcode = +data.code;
+                rmessage = data.message;
+        
+                if (rcode !== 1) {
+                    return { data: [], message: rmessage };
+                }
+        
+                items = result;
+        
+            } catch (err) {
+                console.error(err);
+                throw new Error('Something Went Wrong!');
+            }
+        
+            return { data: items, message: rmessage };
+        }
+        
         
         
         

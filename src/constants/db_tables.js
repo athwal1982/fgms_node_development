@@ -149,5 +149,15 @@ FGMS_USER_ASSIGNED_TICKET_LIST:`${NAME}.assignedTicketView_csc_index`,
     FGMS_CSC_TRAINING_DATA_BINDING:`${NAME}.csc_training_data_binding`,
     CSC_TRAINING_USER_ASSIGN_MANAGE:`${NAME}.csc_training_user_assign_manage` ,
     CSC_TRAINING_CREATE:`${NAME}.csc_create_training`,
-    CSC_TRAINING_AGENTS:`${NAME}.krph_agent_list_new`
+    CSC_TRAINING_AGENTS:`${NAME}.krph_agent_list_new`,
+    CSC_TRAINING_CENTERWISE_TRAINING:`${NAME}.csc_center_wise_training_list`,
+    CSC_TRAINING_AGENT_BY_ID:`${NAME}.csc_agent_by_id`,
+    CSC_TRAINING_UPDATE_AGENT_BY_ID:`${NAME}.csc_update_by_id`
+
+
+
+
+
+
+    
 };
